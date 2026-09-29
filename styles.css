@@ -219,6 +219,23 @@ body {
     background: #666;
 }
 
+.forgot-password-button {
+    display: block;
+    margin: 14px auto 0;
+    padding: 4px;
+    border: 0;
+    background: transparent;
+    color: #90b4e8;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.85rem;
+    text-decoration: underline;
+}
+
+.forgot-password-button:hover {
+    color: #fff;
+}
+
 .submit-button:disabled,
 .signout-button:disabled {
     cursor: wait;

@@ -31,15 +31,16 @@
                     <input id="username" name="username" type="text" autocomplete="username" minlength="3" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" placeholder="e.g. pondfriend" required>
                     <small>3-20 letters, numbers, or underscores</small>
                 </label>
-                <label class="field">
+                <label class="field" id="email-field">
                     <span>Email</span>
                     <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
                 </label>
-                <label class="field">
-                    <span>Password</span>
+                <label class="field" id="password-field">
+                    <span id="password-label">Password</span>
                     <input id="password" name="password" type="password" autocomplete="current-password" minlength="8" placeholder="At least 8 characters" required>
                 </label>
                 <button class="submit-button" id="submit-button" type="submit">Sign in</button>
+                <button class="forgot-password-button" id="forgot-password-button" type="button">Forgot password?</button>
             </form>
 
             <p class="feedback" id="feedback" role="status" aria-live="polite"></p>

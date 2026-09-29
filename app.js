@@ -3,13 +3,18 @@ const authPanel = document.querySelector('#auth-panel');
 const homeDashboard = document.querySelector('#home-dashboard');
 const usernameField = document.querySelector('#username-field');
 const usernameInput = document.querySelector('#username');
+const emailField = document.querySelector('#email-field');
 const emailInput = document.querySelector('#email');
+const passwordField = document.querySelector('#password-field');
 const passwordInput = document.querySelector('#password');
+const passwordLabel = document.querySelector('#password-label');
 const submitButton = document.querySelector('#submit-button');
+const forgotPasswordButton = document.querySelector('#forgot-password-button');
 const feedback = document.querySelector('#feedback');
 const accountLink = document.querySelector('#account-link');
 const configNote = document.querySelector('#config-note');
 const modeTabs = document.querySelectorAll('.auth-tab');
+const authTabs = document.querySelector('.auth-tabs');
 
 const supabaseConfig = window.FROGHUB_SUPABASE_CONFIG;
 const hasConfig = Boolean(supabaseConfig?.url.startsWith('https://')
@@ -20,6 +25,7 @@ const supabaseClient = hasConfig && window.supabase
     : null;
 
 let mode = 'signin';
+let passwordRecovery = false;
 
 function showFeedback(message, isError = false) {
     feedback.textContent = message;
@@ -27,13 +33,20 @@ function showFeedback(message, isError = false) {
 }
 
 function setMode(nextMode) {
+    passwordRecovery = false;
     mode = nextMode;
     const isSignup = mode === 'signup';
 
+    authTabs.hidden = false;
     usernameField.hidden = !isSignup;
     usernameInput.required = isSignup;
+    emailField.hidden = false;
+    emailInput.required = true;
+    passwordField.hidden = false;
+    passwordLabel.textContent = 'Password';
     passwordInput.autocomplete = isSignup ? 'new-password' : 'current-password';
     submitButton.textContent = isSignup ? 'Create account' : 'Sign in';
+    forgotPasswordButton.hidden = isSignup;
     showFeedback('');
 
     modeTabs.forEach((tab) => {
@@ -43,9 +56,30 @@ function setMode(nextMode) {
     });
 }
 
+function setPasswordRecoveryMode() {
+    passwordRecovery = true;
+    authPanel.hidden = false;
+    homeDashboard.hidden = true;
+    accountLink.hidden = true;
+    authTabs.hidden = true;
+    usernameField.hidden = true;
+    usernameInput.required = false;
+    emailField.hidden = true;
+    emailInput.required = false;
+    passwordField.hidden = false;
+    passwordLabel.textContent = 'New password';
+    passwordInput.value = '';
+    passwordInput.autocomplete = 'new-password';
+    submitButton.textContent = 'Update password';
+    forgotPasswordButton.hidden = true;
+    showFeedback('Enter a new password with at least 8 characters.');
+}
+
 modeTabs.forEach((tab) => {
     tab.addEventListener('click', () => setMode(tab.dataset.mode));
 });
+
+setMode(mode);
 
 if (!supabaseClient) {
     configNote.hidden = false;
@@ -54,13 +88,38 @@ if (!supabaseClient) {
         configNote.textContent = 'Supabase could not load. Check your internet connection and reload.';
     }
 } else {
-    supabaseClient.auth.onAuthStateChange((_event, session) => {
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (event === 'PASSWORD_RECOVERY') {
+            setPasswordRecoveryMode();
+            return;
+        }
+        if (passwordRecovery && event !== 'SIGNED_OUT') return;
+
         const user = session?.user;
         authPanel.hidden = Boolean(user);
         homeDashboard.hidden = !user;
         accountLink.hidden = !user;
     });
 }
+
+forgotPasswordButton.addEventListener('click', async () => {
+    if (!supabaseClient || !emailInput.reportValidity()) return;
+
+    forgotPasswordButton.disabled = true;
+    showFeedback('');
+
+    try {
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(emailInput.value.trim(), {
+            redirectTo: `${window.location.origin}${window.location.pathname}`
+        });
+        if (error) throw error;
+        showFeedback('If an account exists for that email, a password reset link is on the way.');
+    } catch (error) {
+        showFeedback(error.message || 'Could not send a password reset link. Please try again.', true);
+    } finally {
+        forgotPasswordButton.disabled = false;
+    }
+});
 
 authForm.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -70,7 +129,18 @@ authForm.addEventListener('submit', async (event) => {
     showFeedback('');
 
     try {
-        if (mode === 'signup') {
+        if (passwordRecovery) {
+            const { error } = await supabaseClient.auth.updateUser({
+                password: passwordInput.value
+            });
+            if (error) throw error;
+
+            passwordRecovery = false;
+            setMode('signin');
+            const { error: signOutError } = await supabaseClient.auth.signOut({ scope: 'local' });
+            if (signOutError) throw signOutError;
+            showFeedback('Password updated. Sign in with your new password.');
+        } else if (mode === 'signup') {
             const { data, error } = await supabaseClient.auth.signUp({
                 email: emailInput.value.trim(),
                 password: passwordInput.value,
