@@ -221,19 +221,35 @@ body {
 
 .forgot-password-button {
     display: block;
-    margin: 14px auto 0;
-    padding: 4px;
-    border: 0;
+    width: 100%;
+    min-height: 42px;
+    margin-top: 10px;
+    padding: 0 14px;
+    border: 1px solid #485653;
+    border-radius: 6px;
     background: transparent;
-    color: #90b4e8;
+    color: #a8ccc2;
     cursor: pointer;
     font: inherit;
     font-size: 0.85rem;
-    text-decoration: underline;
+    font-weight: 600;
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
 }
 
 .forgot-password-button:hover {
-    color: #fff;
+    border-color: #81aa9c;
+    background: #24302d;
+    color: #e0f3eb;
+}
+
+.forgot-password-button:focus-visible {
+    outline: 2px solid #9bc7b7;
+    outline-offset: 2px;
+}
+
+.forgot-password-button:disabled {
+    cursor: wait;
+    opacity: 0.65;
 }
 
 .submit-button:disabled,
