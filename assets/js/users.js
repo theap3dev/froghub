@@ -4,7 +4,7 @@ const userCount = document.querySelector('#user-count');
 const directoryFeedback = document.querySelector('#directory-feedback');
 const refreshUsersButton = document.querySelector('#refresh-users');
 const accountLink = document.querySelector('#account-link');
-const config = window.FROGHUB_SUPABASE_CONFIG;
+const config = window.FROGCHAT_SUPABASE_CONFIG;
 const supabaseClient = config && window.supabase
     ? window.supabase.createClient(config.url, config.anonKey)
     : null;
@@ -75,7 +75,7 @@ function renderUsers() {
         joined.className = 'user-joined';
         joined.textContent = user.created_at
             ? `Joined ${new Date(user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short' })}`
-            : 'Froghub member';
+            : 'Frogchat member';
 
         link.append(avatar, username, joined);
         item.append(link);

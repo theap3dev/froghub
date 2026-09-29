@@ -7,7 +7,7 @@ const postFeedback = document.querySelector('#post-feedback');
 const postList = document.querySelector('#post-list');
 const refreshPostsButton = document.querySelector('#refresh-posts');
 const accountLink = document.querySelector('#account-link');
-const config = window.FROGHUB_SUPABASE_CONFIG;
+const config = window.FROGCHAT_SUPABASE_CONFIG;
 const supabaseClient = config && window.supabase
     ? window.supabase.createClient(config.url, config.anonKey)
     : null;
@@ -37,7 +37,7 @@ function renderPosts(posts) {
 
         const meta = document.createElement('p');
         meta.className = 'post-meta';
-        const username = post.profiles?.username || 'froghub member';
+        const username = post.profiles?.username || 'frogchat member';
         const date = new Date(post.created_at).toLocaleString();
         if (post.profiles?.id) {
             const profileLink = document.createElement('a');

@@ -1,4 +1,4 @@
-const config = window.FROGHUB_SUPABASE_CONFIG;
+const config = window.FROGCHAT_SUPABASE_CONFIG;
 const accountFeedback = document.querySelector('#account-feedback');
 const signoutButton = document.querySelector('#account-signout');
 const avatarImage = document.querySelector('#account-avatar');

@@ -16,7 +16,7 @@ const configNote = document.querySelector('#config-note');
 const modeTabs = document.querySelectorAll('.auth-tab');
 const authTabs = document.querySelector('.auth-tabs');
 
-const supabaseConfig = window.FROGHUB_SUPABASE_CONFIG;
+const supabaseConfig = window.FROGCHAT_SUPABASE_CONFIG;
 const hasConfig = Boolean(supabaseConfig?.url.startsWith('https://')
     && !supabaseConfig.url.includes('YOUR_')
     && !supabaseConfig.anonKey.includes('YOUR_'));
@@ -26,6 +26,13 @@ const supabaseClient = hasConfig && window.supabase
 
 let mode = 'signin';
 let passwordRecovery = false;
+
+function friendlyAuthError(error) {
+    if (/email.*rate limit|rate limit.*email/i.test(error?.message || '')) {
+        return 'Supabase temporarily limited confirmation emails. Wait before retrying, or configure custom SMTP in Supabase Auth.';
+    }
+    return error?.message || 'Something went wrong. Please try again.';
+}
 
 function showFeedback(message, isError = false) {
     feedback.textContent = message;
@@ -166,7 +173,7 @@ authForm.addEventListener('submit', async (event) => {
             showFeedback('Signed in successfully.');
         }
     } catch (error) {
-        showFeedback(error.message || 'Something went wrong. Please try again.', true);
+        showFeedback(friendlyAuthError(error), true);
     } finally {
         submitButton.disabled = false;
     }
