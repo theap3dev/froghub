@@ -111,3 +111,33 @@ create policy "Signed-in users can create posts as themselves"
     for insert
     to authenticated
     with check ((select auth.uid()) = author_id);
+
+create table if not exists public.replies (
+    id uuid primary key default gen_random_uuid(),
+    post_id uuid not null references public.posts (id) on delete cascade,
+    author_id uuid not null references public.profiles (id) on delete cascade,
+    body text not null check (char_length(body) between 1 and 2000),
+    created_at timestamptz not null default now()
+);
+
+create index if not exists replies_post_created_at_idx
+    on public.replies (post_id, created_at asc);
+
+alter table public.replies enable row level security;
+
+grant select on public.replies to anon, authenticated;
+grant insert on public.replies to authenticated;
+
+drop policy if exists "Replies are viewable by everyone" on public.replies;
+create policy "Replies are viewable by everyone"
+    on public.replies
+    for select
+    to anon, authenticated
+    using (true);
+
+drop policy if exists "Signed-in users can reply as themselves" on public.replies;
+create policy "Signed-in users can reply as themselves"
+    on public.replies
+    for insert
+    to authenticated
+    with check ((select auth.uid()) = author_id);

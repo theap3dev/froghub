@@ -11,6 +11,8 @@ const config = window.FROGCHAT_SUPABASE_CONFIG;
 const supabaseClient = config && window.supabase
     ? window.supabase.createClient(config.url, config.anonKey)
     : null;
+let loadedPosts = [];
+let isSignedIn = false;
 
 function showPostFeedback(message, isError = false) {
     postFeedback.textContent = message;
@@ -53,7 +55,78 @@ function renderPosts(posts) {
         body.className = 'post-body';
         body.textContent = post.body;
 
-        article.append(title, meta, body);
+        const repliesSection = document.createElement('section');
+        repliesSection.className = 'post-replies';
+
+        const repliesHeading = document.createElement('h4');
+        repliesHeading.className = 'replies-heading';
+        repliesHeading.textContent = `Replies (${post.replies.length})`;
+        repliesSection.append(repliesHeading);
+
+        if (post.replies.length > 0) {
+            const replyList = document.createElement('div');
+            replyList.className = 'reply-list';
+
+            post.replies.forEach((reply) => {
+                const replyItem = document.createElement('article');
+                replyItem.className = 'reply-item';
+
+                const replyMeta = document.createElement('p');
+                replyMeta.className = 'reply-meta';
+                const replyUsername = reply.profiles?.username || 'frogchat member';
+                if (reply.profiles?.id) {
+                    const profileLink = document.createElement('a');
+                    profileLink.className = 'post-profile-link';
+                    profileLink.href = `users.html#user-${encodeURIComponent(reply.profiles.id)}`;
+                    profileLink.textContent = replyUsername;
+                    replyMeta.append(profileLink, ` | ${new Date(reply.created_at).toLocaleString()}`);
+                } else {
+                    replyMeta.textContent = `${replyUsername} | ${new Date(reply.created_at).toLocaleString()}`;
+                }
+
+                const replyBody = document.createElement('p');
+                replyBody.className = 'reply-body';
+                replyBody.textContent = reply.body;
+                replyItem.append(replyMeta, replyBody);
+                replyList.append(replyItem);
+            });
+
+            repliesSection.append(replyList);
+        }
+
+        const replyFeedback = document.createElement('p');
+        replyFeedback.className = 'reply-feedback';
+        replyFeedback.setAttribute('role', 'status');
+
+        if (isSignedIn) {
+            const replyForm = document.createElement('form');
+            replyForm.className = 'reply-form';
+            replyForm.dataset.postId = post.id;
+
+            const replyInput = document.createElement('textarea');
+            replyInput.name = 'body';
+            replyInput.rows = 2;
+            replyInput.maxLength = 2000;
+            replyInput.placeholder = 'Write a reply...';
+            replyInput.setAttribute('aria-label', `Reply to ${post.title}`);
+            replyInput.required = true;
+
+            const replySubmit = document.createElement('button');
+            replySubmit.className = 'reply-submit-button';
+            replySubmit.type = 'submit';
+            replySubmit.textContent = 'Reply';
+
+            replyForm.append(replyInput, replySubmit);
+            repliesSection.append(replyForm, replyFeedback);
+        } else {
+            const signInLink = document.createElement('a');
+            signInLink.className = 'reply-signin-link';
+            signInLink.href = 'index.html';
+            signInLink.textContent = 'Sign in to reply';
+            repliesSection.append(signInLink);
+        }
+
+        article.append(title, meta, body, repliesSection);
         postList.append(article);
     });
 }
@@ -73,8 +146,41 @@ async function loadPosts() {
         return;
     }
 
-    showPostFeedback('');
-    renderPosts(data || []);
+    const posts = data || [];
+    let replies = [];
+    let migrationNeeded = false;
+    if (posts.length > 0) {
+        const { data: replyData, error: replyError } = await supabaseClient
+            .from('replies')
+            .select('id, post_id, body, created_at, profiles(id, username)')
+            .in('post_id', posts.map((post) => post.id))
+            .order('created_at', { ascending: true });
+
+        if (replyError) {
+            if (replyError.code === 'PGRST205' || replyError.code === '42P01') {
+                migrationNeeded = true;
+            } else {
+                showPostFeedback(replyError.message, true);
+                return;
+            }
+        } else {
+            replies = replyData || [];
+        }
+    }
+
+    const repliesByPost = new Map();
+    replies.forEach((reply) => {
+        const postReplies = repliesByPost.get(reply.post_id) || [];
+        postReplies.push(reply);
+        repliesByPost.set(reply.post_id, postReplies);
+    });
+
+    loadedPosts = posts.map((post) => ({
+        ...post,
+        replies: repliesByPost.get(post.id) || []
+    }));
+    renderPosts(loadedPosts);
+    showPostFeedback(migrationNeeded ? 'Run database/schema.sql in Supabase to enable replies.' : '');
 }
 
 if (!supabaseClient) {
@@ -83,9 +189,10 @@ if (!supabaseClient) {
     showPostFeedback('Connect your Supabase project to load posts.', true);
 } else {
     supabaseClient.auth.onAuthStateChange((_event, session) => {
-        const isSignedIn = Boolean(session?.user);
+        isSignedIn = Boolean(session?.user);
         accountLink.hidden = !isSignedIn;
         if (postForm) postForm.hidden = !isSignedIn;
+        if (loadedPosts.length > 0) renderPosts(loadedPosts);
     });
     loadPosts().catch((error) => showPostFeedback(error.message, true));
 }
@@ -117,6 +224,42 @@ if (postForm) postForm.addEventListener('submit', async (event) => {
         showPostFeedback(error.message || 'Could not publish your post.', true);
     } finally {
         postSubmitButton.disabled = false;
+    }
+});
+
+postList.addEventListener('submit', async (event) => {
+    const replyForm = event.target.closest('.reply-form');
+    if (!replyForm) return;
+    event.preventDefault();
+    if (!supabaseClient) return;
+
+    const submitButton = replyForm.querySelector('button[type="submit"]');
+    const replyInput = replyForm.querySelector('textarea');
+    const replyFeedback = replyForm.nextElementSibling;
+    submitButton.disabled = true;
+    replyFeedback.textContent = 'Sending reply...';
+    replyFeedback.classList.remove('is-error');
+
+    try {
+        const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) throw new Error('Sign in to reply.');
+
+        const { error } = await supabaseClient.from('replies').insert({
+            post_id: replyForm.dataset.postId,
+            author_id: session.user.id,
+            body: replyInput.value.trim()
+        });
+        if (error) throw error;
+
+        await loadPosts();
+    } catch (error) {
+        replyFeedback.textContent = error.code === 'PGRST205' || error.code === '42P01'
+            ? 'Run database/schema.sql in Supabase to enable replies.'
+            : error.message || 'Could not send your reply.';
+        replyFeedback.classList.add('is-error');
+    } finally {
+        submitButton.disabled = false;
     }
 });
 
