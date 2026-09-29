@@ -1,8 +1,11 @@
 create table if not exists public.profiles (
     id uuid primary key references auth.users (id) on delete cascade,
     username text not null check (username ~ '^[A-Za-z0-9_]{3,20}$'),
+    avatar_path text,
     created_at timestamptz not null default now()
 );
+
+alter table public.profiles add column if not exists avatar_path text;
 
 create unique index if not exists profiles_username_lower_unique
     on public.profiles (lower(username));
@@ -10,6 +13,7 @@ create unique index if not exists profiles_username_lower_unique
 alter table public.profiles enable row level security;
 
 grant select on public.profiles to anon, authenticated;
+grant update (avatar_path) on public.profiles to authenticated;
 
 drop policy if exists "Public profiles are viewable" on public.profiles;
 create policy "Public profiles are viewable"
@@ -17,6 +21,48 @@ create policy "Public profiles are viewable"
     for select
     to anon, authenticated
     using (true);
+
+drop policy if exists "Members can update their own avatar path" on public.profiles;
+create policy "Members can update their own avatar path"
+    on public.profiles
+    for update
+    to authenticated
+    using ((select auth.uid()) = id)
+    with check ((select auth.uid()) = id);
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('avatars', 'avatars', true, 5242880, array['image/jpeg', 'image/png', 'image/webp'])
+on conflict (id) do update
+set public = excluded.public,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "Avatar images are publicly readable" on storage.objects;
+create policy "Avatar images are publicly readable"
+    on storage.objects
+    for select
+    to public
+    using (bucket_id = 'avatars');
+
+drop policy if exists "Members can upload their own avatars" on storage.objects;
+create policy "Members can upload their own avatars"
+    on storage.objects
+    for insert
+    to authenticated
+    with check (
+        bucket_id = 'avatars'
+        and (storage.foldername(name))[1] = (select auth.uid())::text
+    );
+
+drop policy if exists "Members can delete their own avatars" on storage.objects;
+create policy "Members can delete their own avatars"
+    on storage.objects
+    for delete
+    to authenticated
+    using (
+        bucket_id = 'avatars'
+        and (storage.foldername(name))[1] = (select auth.uid())::text
+    );
 
 create or replace function public.handle_new_user()
 returns trigger

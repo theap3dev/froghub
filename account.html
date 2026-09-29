@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Account | froghub</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
     <header class="topbar">
         <h1 class="brand">froghub</h1>
         <nav class="topbar-nav" aria-label="Main navigation">
             <a class="topbar-link" href="index.html">Home</a>
+            <a class="topbar-link" href="users.html">Members</a>
             <a class="topbar-link" href="post.html">Create post</a>
         </nav>
     </header>
@@ -19,6 +20,18 @@
         <section class="auth-panel account-panel" aria-labelledby="account-title">
             <p class="eyebrow">ACCOUNT</p>
             <h1 id="account-title">Your account</h1>
+            <section class="account-avatar-editor" aria-label="Profile photo">
+                <div class="account-avatar-frame">
+                    <img id="account-avatar" alt="" hidden>
+                    <span class="account-avatar-fallback" id="account-avatar-fallback" aria-hidden="true"></span>
+                </div>
+                <div class="account-avatar-controls">
+                    <label class="avatar-file-label" for="avatar-input">Profile photo</label>
+                    <input class="avatar-file-input" id="avatar-input" type="file" accept="image/jpeg,image/png,image/webp">
+                    <p class="avatar-help">JPEG, PNG, or WebP. Maximum 5 MB.</p>
+                    <button class="submit-button avatar-save" id="avatar-save" type="button" disabled>Save photo</button>
+                </div>
+            </section>
             <dl class="account-details">
                 <div>
                     <dt>Username</dt>
@@ -34,8 +47,8 @@
         </section>
     </main>
 
-    <script src="supabase-config.js"></script>
+    <script src="assets/js/supabase-config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="account.js"></script>
+    <script src="assets/js/account.js"></script>
 </body>
 </html>

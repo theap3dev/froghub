@@ -39,7 +39,15 @@ function renderPosts(posts) {
         meta.className = 'post-meta';
         const username = post.profiles?.username || 'froghub member';
         const date = new Date(post.created_at).toLocaleString();
-        meta.textContent = `Posted by ${username} | ${date}`;
+        if (post.profiles?.id) {
+            const profileLink = document.createElement('a');
+            profileLink.className = 'post-profile-link';
+            profileLink.href = `users.html#user-${encodeURIComponent(post.profiles.id)}`;
+            profileLink.textContent = username;
+            meta.append('Posted by ', profileLink, ` | ${date}`);
+        } else {
+            meta.textContent = `Posted by ${username} | ${date}`;
+        }
 
         const body = document.createElement('p');
         body.className = 'post-body';
@@ -56,7 +64,7 @@ async function loadPosts() {
 
     const { data, error } = await supabaseClient
         .from('posts')
-        .select('id, title, body, created_at, profiles(username)')
+        .select('id, title, body, created_at, profiles(id, username)')
         .order('created_at', { ascending: false })
         .limit(50);
 

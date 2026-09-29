@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Members | froghub</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <header class="topbar">
+        <h1 class="brand">froghub</h1>
+        <nav class="topbar-nav" aria-label="Main navigation">
+            <a class="topbar-link" href="index.html">Home</a>
+            <a class="topbar-link" href="post.html">Create post</a>
+            <a class="topbar-link" id="account-link" href="account.html" hidden>Account</a>
+        </nav>
+    </header>
+
+    <main class="auth-layout users-page-layout">
+        <section class="users-directory" aria-labelledby="users-title">
+            <header class="directory-header">
+                <div>
+                    <p class="posts-kicker">COMMUNITY</p>
+                    <h2 id="users-title">Members</h2>
+                </div>
+                <button class="refresh-button" id="refresh-users" type="button">Refresh</button>
+            </header>
+            <div class="directory-toolbar">
+                <label class="field directory-search" for="user-search">
+                    <span>Find a member</span>
+                    <input id="user-search" type="search" placeholder="Search usernames" autocomplete="off">
+                </label>
+                <output class="user-count" id="user-count" aria-live="polite">Loading members...</output>
+            </div>
+            <ul class="user-list" id="user-list" aria-label="Froghub members"></ul>
+            <p class="directory-feedback" id="directory-feedback" role="status" aria-live="polite"></p>
+        </section>
+    </main>
+
+    <script src="assets/js/supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="assets/js/users.js"></script>
+</body>
+</html>

@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>froghub</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
     <header class="topbar">
         <h1 class="brand">froghub</h1>
         <nav class="topbar-nav" aria-label="Main navigation">
+            <a class="topbar-link" href="users.html">Members</a>
             <a class="topbar-link" href="post.html">Create post</a>
             <a class="topbar-link" id="account-link" href="account.html" hidden>Account</a>
         </nav>
@@ -44,7 +45,7 @@
             </form>
 
             <p class="feedback" id="feedback" role="status" aria-live="polite"></p>
-            <p class="config-note" id="config-note" hidden>Connect your Supabase project in <code>app.js</code> to enable accounts.</p>
+            <p class="config-note" id="config-note" hidden>Connect your Supabase project in <code>assets/js/supabase-config.js</code> to enable accounts.</p>
         </section>
 
         <section class="home-dashboard" id="home-dashboard" aria-labelledby="home-title" hidden>
@@ -68,9 +69,9 @@
         <p class="page-footnote">Your account stays yours. Your password is handled by Supabase.</p>
     </main>
 
-    <script src="supabase-config.js"></script>
+    <script src="assets/js/supabase-config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js"></script>
-    <script src="posts.js"></script>
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/posts.js"></script>
 </body>
 </html>
