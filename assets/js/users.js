@@ -10,6 +10,7 @@ const supabaseClient = config && window.supabase
     : null;
 const pageSize = 500;
 let allUsers = [];
+let verifiedUsernames = new Set();
 
 function showDirectoryFeedback(message, isError = false) {
     directoryFeedback.textContent = message;
@@ -60,6 +61,16 @@ function renderUsers() {
         username.className = 'user-name';
         username.textContent = user.username;
 
+        if (verifiedUsernames.has(user.username.toLowerCase())) {
+            const badge = document.createElement('span');
+            badge.className = 'verified-badge';
+            badge.setAttribute('role', 'img');
+            badge.setAttribute('aria-label', 'Verified member');
+            badge.title = 'Verified member';
+            badge.textContent = '🐸';
+            username.append(badge);
+        }
+
         const joined = document.createElement('span');
         joined.className = 'user-joined';
         joined.textContent = user.created_at
@@ -87,6 +98,16 @@ async function loadUsers() {
     showDirectoryFeedback('');
 
     try {
+        const verificationResponse = await fetch('assets/data/verified-users.json');
+        if (!verificationResponse.ok) throw new Error('Could not load the verification list.');
+        const verificationData = await verificationResponse.json();
+        const names = Array.isArray(verificationData.verifiedUsers)
+            ? verificationData.verifiedUsers
+            : [];
+        verifiedUsernames = new Set(names
+            .filter((username) => typeof username === 'string')
+            .map((username) => username.trim().toLowerCase()));
+
         const users = [];
         let includeAvatarPath = true;
         let offset = 0;
@@ -104,7 +125,7 @@ async function loadUsers() {
                 includeAvatarPath = false;
                 offset = 0;
                 users.length = 0;
-                showDirectoryFeedback('Run database/schema.sql in Supabase to enable profile photos.');
+                showDirectoryFeedback('Run schema.sql in Supabase to enable profile photos.');
                 continue;
             }
             if (error) throw error;
