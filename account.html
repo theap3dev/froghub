@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account | froghub</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="topbar">
+        <h1 class="brand">froghub</h1>
+        <nav class="topbar-nav" aria-label="Main navigation">
+            <a class="topbar-link" href="index.html">Home</a>
+            <a class="topbar-link" href="post.html">Create post</a>
+        </nav>
+    </header>
+
+    <main class="account-layout">
+        <section class="auth-panel account-panel" aria-labelledby="account-title">
+            <p class="eyebrow">ACCOUNT</p>
+            <h1 id="account-title">Your account</h1>
+            <dl class="account-details">
+                <div>
+                    <dt>Username</dt>
+                    <dd id="account-username"></dd>
+                </div>
+                <div>
+                    <dt>Email</dt>
+                    <dd id="account-email"></dd>
+                </div>
+            </dl>
+            <button class="signout-button" id="account-signout" type="button">Sign out</button>
+            <p class="feedback" id="account-feedback" role="status" aria-live="polite"></p>
+        </section>
+    </main>
+
+    <script src="supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="account.js"></script>
+</body>
+</html>

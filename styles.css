@@ -1,0 +1,451 @@
+body {
+    min-height: 100vh;
+    background-color: #1d1d1d;
+    color: #fff;
+    font-family: 'Arial', sans-serif;
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 90%;
+    max-width: 1000px;
+    margin: 0 auto;
+    background: linear-gradient(to bottom, #3a3a3a, #272727);
+    color: #fff;
+    padding: 10px;
+    text-align: left;
+    text-indent: 2%;
+    border-radius: 32px;
+    border: 2px solid #555;
+}
+
+.brand {
+    margin: 0.67em 0;
+    text-indent: 2%;
+}
+
+.topbar-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-right: 2%;
+    text-indent: 0;
+}
+
+.topbar-link {
+    padding: 9px 14px;
+    border: 1px solid #666;
+    border-radius: 22px;
+    background: #444;
+    color: #fff;
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+.topbar-link:hover {
+    background: #555;
+}
+
+.topbar-link:focus-visible {
+    outline: 2px solid #ccc;
+    outline-offset: 3px;
+}
+
+.auth-layout {
+    display: grid;
+    justify-items: center;
+    gap: 32px;
+    padding: 48px 20px 28px;
+}
+
+.auth-panel {
+    width: min(100%, 430px);
+    box-sizing: border-box;
+    padding: 30px;
+    border: 3px solid #555;
+    border-radius: 32px;
+    background: linear-gradient(to bottom, #333, #3a3a3a);
+    box-shadow: 0 18px 48px #0006;
+}
+
+.home-dashboard {
+    width: min(100%, 760px);
+    box-sizing: border-box;
+    padding: 24px 0;
+    border-top: 1px solid #555;
+    border-bottom: 1px solid #555;
+}
+
+.home-dashboard h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 500;
+}
+
+.home-dashboard p {
+    color: #ccc;
+}
+
+.create-post-button {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 11px 16px;
+    border-radius: 8px;
+    background: #555;
+    color: #fff;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.create-post-button:hover {
+    background: #666;
+}
+
+.panel-mark {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border: 2px solid #666;
+    border-radius: 32px;
+    background: #272727;
+    color: #fff;
+    font-family: inherit;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.eyebrow {
+    margin: 24px 0 10px;
+    color: #ccc;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.auth-panel h1 {
+    margin: 0;
+    font-size: 1.7rem;
+    font-weight: 500;
+}
+
+.panel-copy {
+    margin: 10px 0 25px;
+    color: #ccc;
+    font-size: 0.92rem;
+}
+
+.auth-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    margin-bottom: 22px;
+    padding: 4px;
+    border-radius: 32px;
+    background: #1d1d1d;
+    border: 1px solid #444;
+}
+
+.auth-tab {
+    min-height: 40px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #ccc;
+    cursor: pointer;
+    font: inherit;
+}
+
+.auth-tab.is-active {
+    background: #444;
+    color: #fff;
+    border-radius: 32px;
+}
+
+.field {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 16px;
+    color: #eee;
+    font-size: 0.86rem;
+    font-weight: 600;
+}
+
+.field input {
+    width: 100%;
+    min-height: 44px;
+    box-sizing: border-box;
+    padding: 0 12px;
+    border: 1px solid #555;
+    border-radius: 7px;
+    outline: none;
+    background: #1d1d1d;
+    color: #fff;
+    font: inherit;
+}
+
+.field input:focus {
+    border-color: #aaa;
+    box-shadow: 0 0 0 3px #ffffff20;
+}
+
+.field input::placeholder {
+    color: #888;
+}
+
+.field small {
+    color: #aaa;
+    font-size: 0.75rem;
+    font-weight: 400;
+}
+
+.submit-button,
+.signout-button {
+    width: 100%;
+    min-height: 46px;
+    margin-top: 4px;
+    border: 0;
+    border-radius: 7px;
+    background: #555;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 700;
+}
+
+.submit-button:hover,
+.signout-button:hover {
+    background: #666;
+}
+
+.submit-button:disabled,
+.signout-button:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
+.feedback {
+    min-height: 1.2em;
+    margin: 14px 0 0;
+    color: #ddd;
+    font-size: 0.84rem;
+    line-height: 1.5;
+}
+
+.feedback.is-error {
+    color: #ffb0a8;
+}
+
+.signed-in-label {
+    margin: 18px 0 4px;
+    color: #ccc;
+    font-size: 0.88rem;
+}
+
+.signed-in-name {
+    margin: 0 0 18px;
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.config-note {
+    margin: 18px 0 0;
+    color: #aaa;
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.config-note code {
+    color: #fff;
+}
+
+.page-footnote {
+    margin: 0;
+    color: #999;
+    font-size: 0.78rem;
+    text-align: center;
+}
+
+.posts-section {
+    width: min(100%, 760px);
+}
+
+.posts-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #555;
+}
+
+.posts-kicker {
+    margin: 0 0 5px;
+    color: #aaa;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.posts-header h2 {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 500;
+}
+
+.refresh-button {
+    min-height: 38px;
+    padding: 0 14px;
+    border: 1px solid #666;
+    border-radius: 20px;
+    background: #333;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.85rem;
+}
+
+.refresh-button:hover {
+    background: #444;
+}
+
+.post-composer {
+    margin-bottom: 18px;
+    padding: 22px;
+    border: 2px solid #555;
+    border-radius: 24px;
+    background: linear-gradient(to bottom, #333, #272727);
+}
+
+.field textarea {
+    width: 100%;
+    min-height: 120px;
+    box-sizing: border-box;
+    padding: 12px;
+    border: 1px solid #555;
+    border-radius: 7px;
+    outline: none;
+    background: #1d1d1d;
+    color: #fff;
+    font: inherit;
+    resize: vertical;
+}
+
+.field textarea:focus {
+    border-color: #aaa;
+    box-shadow: 0 0 0 3px #ffffff20;
+}
+
+.field textarea::placeholder {
+    color: #888;
+}
+
+.post-feedback {
+    min-height: 1.2em;
+    margin: 0 0 12px;
+    color: #ddd;
+    font-size: 0.84rem;
+}
+
+.post-feedback.is-error {
+    color: #ffb0a8;
+}
+
+.post-list {
+    display: grid;
+    gap: 14px;
+}
+
+.post-item {
+    padding: 20px 22px;
+    border: 2px solid #555;
+    border-radius: 24px;
+    background: linear-gradient(to bottom, #333, #272727);
+}
+
+.post-item h3 {
+    margin: 0 0 8px;
+    font-size: 1.15rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.post-meta {
+    margin: 0 0 14px;
+    color: #aaa;
+    font-size: 0.8rem;
+}
+
+.post-body {
+    margin: 0;
+    color: #eee;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.post-empty {
+    padding: 28px 20px;
+    border: 1px dashed #555;
+    border-radius: 20px;
+    color: #aaa;
+    text-align: center;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+@media (max-width: 520px) {
+    .auth-layout {
+        padding: 42px 14px 24px;
+    }
+
+    .auth-panel {
+        padding: 24px 20px;
+    }
+
+    .post-composer,
+    .post-item {
+        padding: 18px 16px;
+    }
+}
+
+.account-layout {
+    display: grid;
+    justify-items: center;
+    padding: 48px 20px 28px;
+}
+
+.account-panel {
+    width: min(100%, 430px);
+}
+
+.account-details {
+    display: grid;
+    gap: 18px;
+    margin: 28px 0;
+}
+
+.account-details div {
+    display: grid;
+    gap: 6px;
+}
+
+.account-details dt {
+    color: #aaa;
+    font-size: 0.82rem;
+}
+
+.account-details dd {
+    margin: 0;
+    color: #fff;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.posts-page-layout {
+    padding-top: 48px;
+}

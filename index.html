@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>froghub</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="topbar">
+        <h1 class="brand">froghub</h1>
+        <nav class="topbar-nav" aria-label="Main navigation">
+            <a class="topbar-link" href="post.html">Create post</a>
+            <a class="topbar-link" id="account-link" href="account.html" hidden>Account</a>
+        </nav>
+    </header>
+
+    <main class="auth-layout">
+        <section class="auth-panel" id="auth-panel" aria-labelledby="auth-title">
+            <h1 id="auth-title">The ultimate cybersecurity discussion platform</h1>
+            <p class="panel-copy">Sign in, or make a new account.</p>
+
+            <div class="auth-tabs" role="tablist" aria-label="Account options">
+                <button class="auth-tab is-active" id="signin-tab" type="button" role="tab" aria-selected="true" data-mode="signin">Sign in</button>
+                <button class="auth-tab" id="signup-tab" type="button" role="tab" aria-selected="false" data-mode="signup">Create account</button>
+            </div>
+
+            <form id="auth-form">
+                <label class="field" id="username-field" hidden>
+                    <span>Username</span>
+                    <input id="username" name="username" type="text" autocomplete="username" minlength="3" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" placeholder="e.g. pondfriend" required>
+                    <small>3-20 letters, numbers, or underscores</small>
+                </label>
+                <label class="field">
+                    <span>Email</span>
+                    <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+                </label>
+                <label class="field">
+                    <span>Password</span>
+                    <input id="password" name="password" type="password" autocomplete="current-password" minlength="8" placeholder="At least 8 characters" required>
+                </label>
+                <button class="submit-button" id="submit-button" type="submit">Sign in</button>
+            </form>
+
+            <p class="feedback" id="feedback" role="status" aria-live="polite"></p>
+            <p class="config-note" id="config-note" hidden>Connect your Supabase project in <code>app.js</code> to enable accounts.</p>
+        </section>
+
+        <section class="home-dashboard" id="home-dashboard" aria-labelledby="home-title" hidden>
+            <h2 id="home-title">Welcome to froghub</h2>
+            <p>Share an idea, ask a question, or join the conversation.</p>
+            <a class="create-post-button" href="post.html">Create a post</a>
+        </section>
+
+        <section class="posts-section" aria-labelledby="posts-title">
+            <header class="posts-header">
+                <div>
+                    <p class="posts-kicker">COMMUNITY FEED</p>
+                    <h2 id="posts-title">Latest posts</h2>
+                </div>
+                <button class="refresh-button" id="refresh-posts" type="button">Refresh</button>
+            </header>
+            <p class="post-feedback" id="post-feedback" role="status" aria-live="polite"></p>
+            <div class="post-list" id="post-list" aria-live="polite"></div>
+        </section>
+
+        <p class="page-footnote">Your account stays yours. Your password is handled by Supabase.</p>
+    </main>
+
+    <script src="supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+    <script src="posts.js"></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Posts | froghub</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="topbar">
+        <h1 class="brand">froghub</h1>
+        <nav class="topbar-nav" aria-label="Main navigation">
+            <a class="topbar-link" href="index.html">Home</a>
+            <a class="topbar-link" id="account-link" href="account.html" hidden>Account</a>
+        </nav>
+    </header>
+
+    <main class="auth-layout posts-page-layout">
+        <section class="posts-section" aria-labelledby="posts-title">
+            <header class="posts-header">
+                <div>
+                    <p class="posts-kicker">COMMUNITY FEED</p>
+                    <h2 id="posts-title">Latest posts</h2>
+                </div>
+                <button class="refresh-button" id="refresh-posts" type="button">Refresh</button>
+            </header>
+
+            <form class="post-composer" id="post-form" hidden>
+                <label class="field">
+                    <span>Title</span>
+                    <input id="post-title" name="title" type="text" maxlength="160" placeholder="Give your post a title" required>
+                </label>
+                <label class="field">
+                    <span>Post</span>
+                    <textarea id="post-body" name="body" rows="5" maxlength="5000" placeholder="What’s on your mind?" required></textarea>
+                </label>
+                <button class="submit-button" id="post-submit" type="submit">Publish post</button>
+            </form>
+            <p class="post-feedback" id="post-feedback" role="status" aria-live="polite"></p>
+            <div class="post-list" id="post-list" aria-live="polite"></div>
+        </section>
+    </main>
+
+    <script src="supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="posts.js"></script>
+</body>
+</html>

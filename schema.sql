@@ -1,0 +1,67 @@
+create table if not exists public.profiles (
+    id uuid primary key references auth.users (id) on delete cascade,
+    username text not null check (username ~ '^[A-Za-z0-9_]{3,20}$'),
+    created_at timestamptz not null default now()
+);
+
+create unique index if not exists profiles_username_lower_unique
+    on public.profiles (lower(username));
+
+alter table public.profiles enable row level security;
+
+grant select on public.profiles to anon, authenticated;
+
+drop policy if exists "Public profiles are viewable" on public.profiles;
+create policy "Public profiles are viewable"
+    on public.profiles
+    for select
+    to anon, authenticated
+    using (true);
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+begin
+    insert into public.profiles (id, username)
+    values (new.id, new.raw_user_meta_data ->> 'username');
+    return new;
+end;
+$function$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+    after insert on auth.users
+    for each row execute function public.handle_new_user();
+
+create table if not exists public.posts (
+    id uuid primary key default gen_random_uuid(),
+    author_id uuid not null references public.profiles (id) on delete cascade,
+    title text not null check (char_length(title) between 1 and 160),
+    body text not null check (char_length(body) between 1 and 5000),
+    created_at timestamptz not null default now()
+);
+
+create index if not exists posts_created_at_desc_idx
+    on public.posts (created_at desc);
+
+alter table public.posts enable row level security;
+
+grant select on public.posts to anon, authenticated;
+grant insert on public.posts to authenticated;
+
+drop policy if exists "Posts are viewable by everyone" on public.posts;
+create policy "Posts are viewable by everyone"
+    on public.posts
+    for select
+    to anon, authenticated
+    using (true);
+
+drop policy if exists "Signed-in users can create posts as themselves" on public.posts;
+create policy "Signed-in users can create posts as themselves"
+    on public.posts
+    for insert
+    to authenticated
+    with check ((select auth.uid()) = author_id);
