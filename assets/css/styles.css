@@ -666,7 +666,10 @@ body {
     place-items: center;
     border: 1px solid #7db599;
     background: #e7f4ec;
-    font-size: 0.75rem;
+    background-image: url("../img/logo-removebg-preview.png");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
     vertical-align: -2px;
 }
 
@@ -1008,4 +1011,112 @@ body {
     border-color: #8bc85b;
     background: #2a3c27;
     color: #e0f3ce;
+}
+
+.profile-page-layout {
+    width: min(100%, 800px);
+    box-sizing: border-box;
+    margin: 0 auto;
+    padding: 40px 20px 28px;
+}
+
+.profile-back-link {
+    display: inline-block;
+    margin-bottom: 18px;
+    color: #a8dc78;
+    text-decoration: none;
+}
+
+.profile-back-link:hover {
+    color: #d0f2ad;
+    text-decoration: underline;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 10px 0 22px;
+    border-bottom: 1px solid #435641;
+}
+
+.profile-avatar {
+    width: 80px;
+    height: 80px;
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    overflow: hidden;
+    border: 2px solid #6f9b43;
+    border-radius: 50%;
+    background: #30462b;
+    object-fit: cover;
+}
+
+.profile-avatar-fallback {
+    display: grid;
+    place-items: center;
+    color: #d9f2bd;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.profile-details h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.profile-joined {
+    margin: 6px 0 0;
+    color: #aeb8b4;
+    font-size: 0.84rem;
+}
+
+.profile-posts {
+    padding-top: 22px;
+}
+
+.profile-posts-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #435641;
+}
+
+.profile-posts-header h2 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 500;
+}
+
+.profile-post-count {
+    color: #aeb8b4;
+    font-size: 0.82rem;
+}
+
+.profile-feedback {
+    min-height: 1.2em;
+    margin: 0 0 12px;
+    color: #aaa;
+    font-size: 0.84rem;
+    line-height: 1.5;
+}
+
+.profile-feedback.is-error {
+    color: #ffb0a8;
+}
+
+@media (max-width: 520px) {
+    .profile-page-layout {
+        padding: 30px 14px 24px;
+    }
+
+    .profile-avatar {
+        width: 64px;
+        height: 64px;
+    }
 }

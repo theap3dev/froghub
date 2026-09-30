@@ -45,6 +45,16 @@ function createPostAvatar(profile, username) {
     return avatar;
 }
 
+function getProfileUrl(profile) {
+    if (!profile.username) return `users.html#user-${encodeURIComponent(profile.id)}`;
+
+    const usernamePath = encodeURIComponent(profile.username);
+    const profilePath = window.location.hostname === 'theap3dev.github.io'
+        ? `users/${usernamePath}`
+        : `404.html?username=${usernamePath}`;
+    return new URL(profilePath, window.location.href).href;
+}
+
 function renderPosts(posts) {
     postList.replaceChildren();
 
@@ -70,7 +80,7 @@ function renderPosts(posts) {
         if (post.profiles?.id) {
             const profileLink = document.createElement('a');
             profileLink.className = 'post-profile-link post-author-link';
-            profileLink.href = `users.html#user-${encodeURIComponent(post.profiles.id)}`;
+            profileLink.href = getProfileUrl(post.profiles);
             const usernameLabel = document.createElement('span');
             usernameLabel.textContent = username;
             profileLink.append(createPostAvatar(post.profiles, username), usernameLabel);
@@ -105,7 +115,7 @@ function renderPosts(posts) {
                 if (reply.profiles?.id) {
                     const profileLink = document.createElement('a');
                     profileLink.className = 'post-profile-link';
-                    profileLink.href = `users.html#user-${encodeURIComponent(reply.profiles.id)}`;
+                    profileLink.href = getProfileUrl(reply.profiles);
                     profileLink.textContent = replyUsername;
                     replyMeta.append(profileLink, ` | ${new Date(reply.created_at).toLocaleString()}`);
                 } else {

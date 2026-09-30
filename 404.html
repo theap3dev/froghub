@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        const pathParts = window.location.pathname.split('/').filter(Boolean);
+        const usersIndex = pathParts.lastIndexOf('users');
+        const appRoot = usersIndex > 0
+            ? `/${pathParts.slice(0, usersIndex).join('/')}/`
+            : new URL('.', window.location.href).pathname;
+        const baseElement = document.createElement('base');
+        baseElement.href = appRoot;
+        document.head.append(baseElement);
+    </script>
+    <title>Member | frogchat</title>
+    <link rel="stylesheet" href="assets/css/styles.css?v=2">
+</head>
+<body>
+    <header class="topbar">
+        <h1 class="brand"><a class="brand-link" href="index.html"><img class="brand-logo" src="assets/img/logo-removebg-preview.png" alt="">frogchat</a></h1>
+        <nav class="topbar-nav" aria-label="Main navigation">
+            <a class="topbar-link" href="users.html">Members</a>
+            <a class="topbar-link" href="post.html">Create post</a>
+            <a class="topbar-link" id="account-link" href="account.html" hidden>Account</a>
+        </nav>
+    </header>
+
+    <main class="profile-page-layout">
+        <a class="profile-back-link" href="users.html">Members</a>
+        <section class="profile-header" aria-labelledby="profile-name">
+            <img class="profile-avatar" id="profile-avatar" alt="" hidden>
+            <span class="profile-avatar profile-avatar-fallback" id="profile-avatar-fallback" aria-hidden="true" hidden></span>
+            <div class="profile-details">
+                <p class="posts-kicker">MEMBER PROFILE</p>
+                <h2 id="profile-name">Loading profile...</h2>
+                <p class="profile-joined" id="profile-joined"></p>
+            </div>
+        </section>
+
+        <section class="profile-posts" aria-labelledby="profile-posts-title">
+            <header class="profile-posts-header">
+                <h2 id="profile-posts-title">Posts</h2>
+                <span class="profile-post-count" id="profile-post-count"></span>
+            </header>
+            <p class="profile-feedback" id="profile-feedback" role="status" aria-live="polite"></p>
+            <div class="post-list" id="profile-post-list"></div>
+        </section>
+    </main>
+
+    <script src="assets/js/supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="assets/js/profile.js?v=1"></script>
+</body>
+</html>

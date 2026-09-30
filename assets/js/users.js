@@ -44,7 +44,11 @@ function renderUsers() {
 
         const link = document.createElement('a');
         link.className = 'user-profile-link';
-        link.href = `#user-${encodeURIComponent(user.id)}`;
+        const usernamePath = encodeURIComponent(user.username);
+        const profilePath = window.location.hostname === 'theap3dev.github.io'
+            ? `users/${usernamePath}`
+            : `404.html?username=${usernamePath}`;
+        link.href = new URL(profilePath, window.location.href).href;
         link.setAttribute('aria-label', `View ${user.username}'s profile`);
 
         const avatar = user.avatar_path ? document.createElement('img') : document.createElement('span');
@@ -67,7 +71,6 @@ function renderUsers() {
             badge.setAttribute('role', 'img');
             badge.setAttribute('aria-label', 'Verified member');
             badge.title = 'Verified member';
-            badge.textContent = '🐸';
             username.append(badge);
         }
 
