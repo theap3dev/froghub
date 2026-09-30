@@ -3,16 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script>
-        const pathParts = window.location.pathname.split('/').filter(Boolean);
-        const usersIndex = pathParts.lastIndexOf('users');
-        const appRoot = usersIndex > 0
-            ? `/${pathParts.slice(0, usersIndex).join('/')}/`
-            : new URL('.', window.location.href).pathname;
-        const baseElement = document.createElement('base');
-        baseElement.href = appRoot;
-        document.head.append(baseElement);
-    </script>
+    <base href="../">
     <title>Member | frogchat</title>
     <link rel="stylesheet" href="assets/css/styles.css?v=2">
 </head>
