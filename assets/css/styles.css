@@ -17,7 +17,6 @@ body {
     padding: 10px;
     text-align: left;
     text-indent: 2%;
-    border-radius: 32px;
     border: 2px solid #555;
     height: 6vh;
 }
@@ -25,6 +24,21 @@ body {
 .brand {
     margin: 0.67em 0;
     text-indent: 2%;
+}
+
+.brand-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.brand-logo {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    object-fit: contain;
 }
 
 .topbar-nav {
@@ -38,7 +52,6 @@ body {
 .topbar-link {
     padding: 9px 14px;
     border: 2px solid #666;
-    border-radius: 22px;
     background: #444;
     color: #fff;
     font-size: 0.9rem;
@@ -69,7 +82,6 @@ body {
     box-sizing: border-box;
     padding: 30px;
     border: 3px solid #555;
-    border-radius: 32px;
     background: linear-gradient(to bottom, #333, #3a3a3a);
     box-shadow: 0 18px 48px #0006;
 }
@@ -96,7 +108,6 @@ body {
     display: inline-block;
     margin-top: 8px;
     padding: 11px 16px;
-    border-radius: 8px;
     background: #555;
     color: #fff;
     font-weight: 700;
@@ -113,7 +124,6 @@ body {
     height: 38px;
     place-items: center;
     border: 2px solid #666;
-    border-radius: 32px;
     background: #272727;
     color: #fff;
     font-family: inherit;
@@ -146,7 +156,6 @@ body {
     gap: 4px;
     margin-bottom: 22px;
     padding: 4px;
-    border-radius: 32px;
     background: #1d1d1d;
     border: 1px solid #444;
 }
@@ -154,7 +163,6 @@ body {
 .auth-tab {
     min-height: 40px;
     border: 0;
-    border-radius: 6px;
     background: transparent;
     color: #ccc;
     cursor: pointer;
@@ -164,7 +172,6 @@ body {
 .auth-tab.is-active {
     background: #444;
     color: #fff;
-    border-radius: 32px;
 }
 
 .field {
@@ -182,7 +189,6 @@ body {
     box-sizing: border-box;
     padding: 0 12px;
     border: 1px solid #555;
-    border-radius: 7px;
     outline: none;
     background: #1d1d1d;
     color: #fff;
@@ -210,7 +216,6 @@ body {
     min-height: 46px;
     margin-top: 4px;
     border: 0;
-    border-radius: 7px;
     background: #555;
     color: #fff;
     cursor: pointer;
@@ -230,7 +235,6 @@ body {
     margin-top: 10px;
     padding: 0 14px;
     border: 1px solid #485653;
-    border-radius: 6px;
     background: transparent;
     color: #a8ccc2;
     cursor: pointer;
@@ -336,7 +340,6 @@ body {
     min-height: 38px;
     padding: 0 14px;
     border: 1px solid #666;
-    border-radius: 20px;
     background: #333;
     color: #fff;
     cursor: pointer;
@@ -352,7 +355,6 @@ body {
     margin-bottom: 18px;
     padding: 22px;
     border: 2px solid #555;
-    border-radius: 24px;
     background: linear-gradient(to bottom, #333, #272727);
 }
 
@@ -362,7 +364,6 @@ body {
     box-sizing: border-box;
     padding: 12px;
     border: 1px solid #555;
-    border-radius: 7px;
     outline: none;
     background: #1d1d1d;
     color: #fff;
@@ -398,7 +399,6 @@ body {
 .post-item {
     padding: 20px 22px;
     border: 2px solid #555;
-    border-radius: 24px;
     background: linear-gradient(to bottom, #333, #272727);
 }
 
@@ -475,7 +475,6 @@ body {
     box-sizing: border-box;
     padding: 10px 12px;
     border: 1px solid #555;
-    border-radius: 6px;
     outline: none;
     background: #1d1d1d;
     color: #fff;
@@ -493,7 +492,6 @@ body {
     min-height: 34px;
     padding: 0 14px;
     border: 1px solid #55756a;
-    border-radius: 6px;
     background: #35443f;
     color: #e0f3eb;
     cursor: pointer;
@@ -535,7 +533,6 @@ body {
 .post-empty {
     padding: 28px 20px;
     border: 1px dashed #555;
-    border-radius: 20px;
     color: #aaa;
     text-align: center;
 }
@@ -591,7 +588,6 @@ body {
 .user-item {
     overflow: hidden;
     border: 1px solid #454d4a;
-    border-radius: 7px;
     background: #282d2b;
     scroll-margin-top: 20px;
 }
@@ -623,7 +619,6 @@ body {
     overflow: hidden;
     place-items: center;
     border: 1px solid #55756a;
-    border-radius: 50%;
     background: #35443f;
     color: #d3eee2;
     font-size: 1.1rem;
@@ -647,7 +642,6 @@ body {
     margin-left: 7px;
     place-items: center;
     border: 1px solid #7db599;
-    border-radius: 50%;
     background: #e7f4ec;
     font-size: 0.75rem;
     vertical-align: -2px;
@@ -662,7 +656,6 @@ body {
 .user-empty {
     padding: 18px 14px;
     border: 1px dashed #555;
-    border-radius: 7px;
     color: #aaa;
     text-align: center;
 }
@@ -707,6 +700,11 @@ body {
         margin: 4px 0;
         font-size: 1.3rem;
         text-indent: 0;
+    }
+
+    .brand-logo {
+        width: 32px;
+        height: 32px;
     }
 
     .topbar-nav {
@@ -798,7 +796,6 @@ body {
     overflow: hidden;
     place-items: center;
     border: 2px solid #55756a;
-    border-radius: 50%;
     background: #35443f;
     color: #d3eee2;
 }
@@ -839,7 +836,6 @@ body {
     margin-right: 8px;
     padding: 7px 9px;
     border: 1px solid #666;
-    border-radius: 6px;
     background: #444;
     color: #fff;
     cursor: pointer;
@@ -859,4 +855,134 @@ body {
 
 .posts-page-layout {
     padding-top: 48px;
+}
+
+body {
+    background:
+        radial-gradient(ellipse at 50% 0, #1a3219 0, transparent 42%),
+        #111811;
+}
+
+.topbar {
+    border-color: #435641;
+    background: linear-gradient(to bottom, #293a28, #1d2a1d);
+}
+
+.topbar-link,
+.refresh-button {
+    border-color: #53684e;
+    background: #2c3d2a;
+}
+
+.topbar-link:hover,
+.refresh-button:hover {
+    background: #3b5236;
+}
+
+.topbar-link:focus-visible,
+.auth-tab:focus-visible,
+.submit-button:focus-visible,
+.signout-button:focus-visible,
+.create-post-button:focus-visible,
+.refresh-button:focus-visible {
+    outline: 2px solid #a2e53e;
+    outline-offset: 3px;
+}
+
+.auth-panel,
+.post-composer,
+.post-item {
+    border-color: #435641;
+    background: linear-gradient(to bottom, #253425, #1c281d);
+}
+
+.home-dashboard,
+.posts-header,
+.directory-header {
+    border-color: #435641;
+}
+
+.create-post-button,
+.submit-button,
+.signout-button {
+    background: #78c914;
+    color: #14210d;
+}
+
+.create-post-button:hover,
+.submit-button:hover,
+.signout-button:hover {
+    background: #91e127;
+}
+
+.panel-mark,
+.auth-tabs,
+.auth-tab.is-active {
+    border-color: #435641;
+    background-color: #1a281b;
+}
+
+.auth-tab.is-active {
+    background: #354a30;
+}
+
+.field input,
+.field textarea,
+.reply-form textarea {
+    border-color: #4a6145;
+    background: #131d14;
+}
+
+.field input:focus,
+.field textarea:focus,
+.reply-form textarea:focus {
+    border-color: #9bdc36;
+    box-shadow: 0 0 0 3px #9bdc3625;
+}
+
+.user-item {
+    border-color: #435641;
+    background: #202d20;
+}
+
+.user-profile-link:hover {
+    background: #2b3d29;
+}
+
+.user-avatar,
+.account-avatar-frame {
+    border-color: #6f9b43;
+    background: #30462b;
+    color: #d9f2bd;
+}
+
+.reply-submit-button {
+    border-color: #6f9b43;
+    background: #30462b;
+    color: #e1f5d3;
+}
+
+.reply-submit-button:hover {
+    background: #405d35;
+}
+
+.post-profile-link,
+.reply-signin-link {
+    color: #a8dc78;
+}
+
+.post-profile-link:hover,
+.reply-signin-link:hover {
+    color: #d0f2ad;
+}
+
+.forgot-password-button {
+    border-color: #536c48;
+    color: #b5df8d;
+}
+
+.forgot-password-button:hover {
+    border-color: #8bc85b;
+    background: #2a3c27;
+    color: #e0f3ce;
 }
