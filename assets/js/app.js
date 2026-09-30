@@ -23,6 +23,7 @@ const hasConfig = Boolean(supabaseConfig?.url.startsWith('https://')
 const supabaseClient = hasConfig && window.supabase
     ? window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey)
     : null;
+const authRedirectUrl = `${window.location.origin}${window.location.pathname}`;
 
 let mode = 'signin';
 let passwordRecovery = false;
@@ -117,7 +118,7 @@ forgotPasswordButton.addEventListener('click', async () => {
 
     try {
         const { error } = await supabaseClient.auth.resetPasswordForEmail(emailInput.value.trim(), {
-            redirectTo: `${window.location.origin}${window.location.pathname}`
+            redirectTo: authRedirectUrl
         });
         if (error) throw error;
         showFeedback('If an account exists for that email, a password reset link is on the way.');
@@ -152,6 +153,7 @@ authForm.addEventListener('submit', async (event) => {
                 email: emailInput.value.trim(),
                 password: passwordInput.value,
                 options: {
+                    emailRedirectTo: authRedirectUrl,
                     data: { username: usernameInput.value.trim() }
                 }
             });
