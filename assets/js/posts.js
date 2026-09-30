@@ -19,6 +19,32 @@ function showPostFeedback(message, isError = false) {
     postFeedback.classList.toggle('is-error', isError);
 }
 
+function isMissingAvatarPath(error) {
+    return error?.code === '42703' || error?.code === 'PGRST204';
+}
+
+function createPostAvatar(profile, username) {
+    const avatar = profile?.avatar_path ? document.createElement('img') : document.createElement('span');
+    avatar.className = 'post-author-avatar';
+    avatar.setAttribute('aria-hidden', 'true');
+
+    if (profile?.avatar_path) {
+        avatar.alt = '';
+        avatar.src = supabaseClient.storage.from('avatars').getPublicUrl(profile.avatar_path).data.publicUrl;
+        avatar.addEventListener('error', () => {
+            const fallback = document.createElement('span');
+            fallback.className = 'post-author-avatar post-author-avatar-fallback';
+            fallback.textContent = username.charAt(0).toUpperCase();
+            avatar.replaceWith(fallback);
+        }, { once: true });
+    } else {
+        avatar.classList.add('post-author-avatar-fallback');
+        avatar.textContent = username.charAt(0).toUpperCase();
+    }
+
+    return avatar;
+}
+
 function renderPosts(posts) {
     postList.replaceChildren();
 
@@ -43,9 +69,11 @@ function renderPosts(posts) {
         const date = new Date(post.created_at).toLocaleString();
         if (post.profiles?.id) {
             const profileLink = document.createElement('a');
-            profileLink.className = 'post-profile-link';
+            profileLink.className = 'post-profile-link post-author-link';
             profileLink.href = `users.html#user-${encodeURIComponent(post.profiles.id)}`;
-            profileLink.textContent = username;
+            const usernameLabel = document.createElement('span');
+            usernameLabel.textContent = username;
+            profileLink.append(createPostAvatar(post.profiles, username), usernameLabel);
             meta.append('Posted by ', profileLink, ` | ${date}`);
         } else {
             meta.textContent = `Posted by ${username} | ${date}`;
@@ -135,11 +163,21 @@ async function loadPosts() {
     showPostFeedback('Loading posts...');
     postList.replaceChildren();
 
-    const { data, error } = await supabaseClient
+    let { data, error } = await supabaseClient
         .from('posts')
-        .select('id, title, body, created_at, profiles(id, username)')
+        .select('id, title, body, created_at, profiles(id, username, avatar_path)')
         .order('created_at', { ascending: false })
         .limit(50);
+
+    let avatarMigrationNeeded = false;
+    if (error && isMissingAvatarPath(error)) {
+        avatarMigrationNeeded = true;
+        ({ data, error } = await supabaseClient
+            .from('posts')
+            .select('id, title, body, created_at, profiles(id, username)')
+            .order('created_at', { ascending: false })
+            .limit(50));
+    }
 
     if (error) {
         showPostFeedback(error.message, true);
@@ -180,7 +218,10 @@ async function loadPosts() {
         replies: repliesByPost.get(post.id) || []
     }));
     renderPosts(loadedPosts);
-    showPostFeedback(migrationNeeded ? 'Run database/schema.sql in Supabase to enable replies.' : '');
+    const notices = [];
+    if (avatarMigrationNeeded) notices.push('Run database/schema.sql in Supabase to enable profile photos.');
+    if (migrationNeeded) notices.push('Run database/schema.sql in Supabase to enable replies.');
+    showPostFeedback(notices.join(' '));
 }
 
 if (!supabaseClient) {

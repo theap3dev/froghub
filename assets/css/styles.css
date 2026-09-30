@@ -415,6 +415,29 @@ body {
     font-size: 0.8rem;
 }
 
+.post-author-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    vertical-align: middle;
+}
+
+.post-author-avatar {
+    display: inline-grid;
+    width: 28px;
+    height: 28px;
+    box-sizing: border-box;
+    overflow: hidden;
+    place-items: center;
+    border: 1px solid #6f9b43;
+    border-radius: 50%;
+    background: #30462b;
+    color: #e1f5d3;
+    font-size: 0.72rem;
+    font-weight: 700;
+    object-fit: cover;
+}
+
 .post-body {
     margin: 0;
     color: #eee;
