@@ -400,7 +400,9 @@ body {
 .post-image-preview,
 .post-image {
     display: block;
-    width: min(100%, 680px);
+    width: 100%;
+    max-width: 680px;
+    height: auto;
     max-height: 560px;
     margin: 12px 0 18px;
     border: 1px solid #484848;
@@ -430,6 +432,7 @@ body {
 }
 
 .post-item {
+    min-width: 0;
     padding: 20px 22px;
     border: 2px solid #555;
     background: linear-gradient(to bottom, #333, #272727);
