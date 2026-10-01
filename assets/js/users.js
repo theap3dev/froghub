@@ -10,7 +10,7 @@ const supabaseClient = config && window.supabase
     : null;
 const pageSize = 500;
 let allUsers = [];
-let verifiedUsernames = new Set();
+let verifiedUserIds = new Set();
 
 function showDirectoryFeedback(message, isError = false) {
     directoryFeedback.textContent = message;
@@ -65,7 +65,7 @@ function renderUsers() {
         username.className = 'user-name';
         username.textContent = user.username;
 
-        if (verifiedUsernames.has(user.username.toLowerCase())) {
+        if (verifiedUserIds.has(user.id)) {
             const badge = document.createElement('span');
             badge.className = 'verified-badge';
             badge.setAttribute('role', 'img');
@@ -101,18 +101,24 @@ async function loadUsers() {
     showDirectoryFeedback('');
 
     try {
-        const verificationResponse = await fetch('assets/data/verified-users.json');
-        if (!verificationResponse.ok) throw new Error('Could not load the verification list.');
-        const verificationData = await verificationResponse.json();
-        const names = Array.isArray(verificationData.verifiedUsers)
-            ? verificationData.verifiedUsers
-            : [];
-        verifiedUsernames = new Set(names
-            .filter((username) => typeof username === 'string')
-            .map((username) => username.trim().toLowerCase()));
+        const { data: verificationData, error: verificationError } = await supabaseClient
+            .from('verified_users')
+            .select('user_id');
+        let verificationMigrationNeeded = false;
+        if (verificationError) {
+            if (verificationError.code === 'PGRST205' || verificationError.code === '42P01') {
+                verificationMigrationNeeded = true;
+                verifiedUserIds = new Set();
+            } else {
+                throw verificationError;
+            }
+        } else {
+            verifiedUserIds = new Set((verificationData || []).map((entry) => entry.user_id));
+        }
 
         const users = [];
         let includeAvatarPath = true;
+        let avatarMigrationNeeded = false;
         let offset = 0;
         while (true) {
             const columns = includeAvatarPath
@@ -126,9 +132,9 @@ async function loadUsers() {
 
             if (error && includeAvatarPath && isMissingAvatarPath(error)) {
                 includeAvatarPath = false;
+                avatarMigrationNeeded = true;
                 offset = 0;
                 users.length = 0;
-                showDirectoryFeedback('Run schema.sql in Supabase to enable profile photos.');
                 continue;
             }
             if (error) throw error;
@@ -140,6 +146,10 @@ async function loadUsers() {
 
         allUsers = users;
         renderUsers();
+    const notices = [];
+    if (verificationMigrationNeeded) notices.push('Run database/schema.sql in Supabase to enable verified member badges.');
+    if (avatarMigrationNeeded) notices.push('Run database/schema.sql in Supabase to enable profile photos.');
+    showDirectoryFeedback(notices.join(' '));
     } catch (error) {
         userCount.textContent = '';
         showDirectoryFeedback(error.message || 'Could not load members.', true);

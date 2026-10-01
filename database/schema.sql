@@ -30,6 +30,27 @@ create policy "Members can update their own avatar path"
     using ((select auth.uid()) = id)
     with check ((select auth.uid()) = id);
 
+create table if not exists public.verified_users (
+    user_id uuid primary key references public.profiles (id) on delete cascade,
+    verified_at timestamptz not null default now()
+);
+
+alter table public.verified_users enable row level security;
+grant select on public.verified_users to anon, authenticated;
+
+drop policy if exists "Verified members are publicly viewable" on public.verified_users;
+create policy "Verified members are publicly viewable"
+    on public.verified_users
+    for select
+    to anon, authenticated
+    using (true);
+
+insert into public.verified_users (user_id)
+select id
+from public.profiles
+where lower(username) in ('ap3', 'manington72', 'mrcube')
+on conflict (user_id) do nothing;
+
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('avatars', 'avatars', true, 5242880, array['image/jpeg', 'image/png', 'image/webp'])
 on conflict (id) do update
