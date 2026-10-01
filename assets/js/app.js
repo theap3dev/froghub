@@ -12,6 +12,7 @@ const submitButton = document.querySelector('#submit-button');
 const forgotPasswordButton = document.querySelector('#forgot-password-button');
 const feedback = document.querySelector('#feedback');
 const accountLink = document.querySelector('#account-link');
+const adminLink = document.querySelector('#admin-link');
 const configNote = document.querySelector('#config-note');
 const modeTabs = document.querySelectorAll('.auth-tab');
 const authTabs = document.querySelector('.auth-tabs');
@@ -27,6 +28,7 @@ const authRedirectUrl = `${window.location.origin}${window.location.pathname}`;
 
 let mode = 'signin';
 let passwordRecovery = false;
+let adminVisibilityCheck = 0;
 
 function friendlyAuthError(error) {
     if (/email.*rate limit|rate limit.*email/i.test(error?.message || '')) {
@@ -104,9 +106,21 @@ if (!supabaseClient) {
         if (passwordRecovery && event !== 'SIGNED_OUT') return;
 
         const user = session?.user;
+        const checkVersion = ++adminVisibilityCheck;
+        adminLink.hidden = true;
         authPanel.hidden = Boolean(user);
         homeDashboard.hidden = !user;
         accountLink.hidden = !user;
+
+        if (user) {
+            queueMicrotask(() => {
+                supabaseClient.rpc('is_moderator').then(({ data, error }) => {
+                    if (checkVersion === adminVisibilityCheck) {
+                        adminLink.hidden = Boolean(error || !data);
+                    }
+                });
+            });
+        }
     });
 }
 

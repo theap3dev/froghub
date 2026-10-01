@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderation | frogchat</title>
+    <link rel="stylesheet" href="assets/css/styles.css?v=3">
+</head>
+<body>
+    <header class="topbar">
+        <h1 class="brand"><a class="brand-link" href="index.html"><img class="brand-logo" src="assets/img/logo-removebg-preview.png" alt="">frogchat</a></h1>
+        <nav class="topbar-nav" aria-label="Main navigation">
+            <a class="topbar-link" href="index.html">Home</a>
+            <a class="topbar-link" href="users.html">Members</a>
+            <a class="topbar-link" id="account-link" href="account.html" hidden>Account</a>
+        </nav>
+    </header>
+    <main class="admin-layout">
+        <header class="admin-header">
+            <div><p class="posts-kicker">COMMUNITY OPERATIONS</p><h2>Moderation</h2></div>
+            <button class="refresh-button" id="refresh-admin" type="button" disabled>Refresh</button>
+        </header>
+        <p class="admin-feedback" id="admin-feedback" role="status" aria-live="polite">Checking moderator access...</p>
+        <section class="admin-content" id="admin-content" hidden>
+            <section class="admin-section" aria-labelledby="members-title">
+                <header class="admin-section-header">
+                    <div><p class="posts-kicker">ACCOUNT ACTIONS</p><h3 id="members-title">Members</h3></div>
+                </header>
+                <p class="admin-note">Bans and timeouts block posting and replying. Account sign-in remains managed by Supabase Auth.</p>
+                <div class="admin-member-selector">
+                    <label class="admin-control" for="admin-search">Search members
+                        <input class="admin-search" id="admin-search" type="search" placeholder="Type a username" autocomplete="off">
+                    </label>
+                    <label class="admin-control" for="admin-user-select">Member
+                        <select class="admin-select" id="admin-user-select" disabled>
+                            <option value="">Loading members...</option>
+                        </select>
+                    </label>
+                </div>
+                <p class="admin-selected-status" id="admin-selected-status" role="status">Select a member to view their status.</p>
+                <form class="admin-action-form" id="admin-action-form">
+                    <label class="admin-control" for="admin-action-select">Action
+                        <select class="admin-select" id="admin-action-select" required>
+                            <option value="" selected disabled>Choose an action</option>
+                            <option value="warn">Warn</option>
+                            <option value="ban">Ban from posting</option>
+                            <option value="timeout">Set timeout</option>
+                            <option value="clear">Clear restriction</option>
+                            <option value="delete-account">Delete account</option>
+                        </select>
+                    </label>
+                    <label class="admin-control admin-conditional-field" id="admin-warning-field" for="admin-warning-message" hidden>
+                        Warning message
+                        <textarea class="admin-textarea" id="admin-warning-message" name="message" rows="3" maxlength="1000" placeholder="Describe the issue and expected change"></textarea>
+                    </label>
+                    <label class="admin-control admin-conditional-field" id="admin-timeout-field" for="admin-timeout-duration" hidden>
+                        Timeout duration
+                        <select class="admin-select" id="admin-timeout-duration">
+                            <option value="3600000">1 hour</option>
+                            <option value="86400000">24 hours</option>
+                            <option value="604800000">7 days</option>
+                        </select>
+                    </label>
+                    <p class="admin-note admin-conditional-field" id="admin-delete-note" hidden>Deleting an account also removes its posts, replies, and moderation history. This cannot be undone.</p>
+                    <button class="admin-action admin-apply-button" id="admin-apply-action" type="submit" disabled>Apply action</button>
+                </form>
+            </section>
+            <section class="admin-section" aria-labelledby="posts-title-admin">
+                <header class="admin-section-header"><div><p class="posts-kicker">CONTENT ACTIONS</p><h3 id="posts-title-admin">Recent posts</h3></div></header>
+                <div class="admin-post-list" id="admin-post-list"></div>
+            </section>
+            <section class="admin-section" aria-labelledby="warnings-title">
+                <header class="admin-section-header"><div><p class="posts-kicker">MODERATION HISTORY</p><h3 id="warnings-title">Warnings</h3></div></header>
+                <ol class="admin-warning-list" id="admin-warning-list"></ol>
+            </section>
+        </section>
+    </main>
+    <script src="assets/js/supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="assets/js/admin.js?v=2"></script>
+</body>
+</html>

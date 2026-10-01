@@ -141,3 +141,200 @@ create policy "Signed-in users can reply as themselves"
     for insert
     to authenticated
     with check ((select auth.uid()) = author_id);
+
+create table if not exists public.moderation_admins (
+    user_id uuid primary key references auth.users (id) on delete cascade,
+    created_at timestamptz not null default now()
+);
+
+alter table public.moderation_admins enable row level security;
+
+create or replace function public.is_moderator()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $function$
+    select exists (
+        select 1
+        from public.moderation_admins
+        where user_id = (select auth.uid())
+    );
+$function$;
+
+create table if not exists public.user_moderation (
+    user_id uuid primary key references public.profiles (id) on delete cascade,
+    is_banned boolean not null default false,
+    timeout_until timestamptz,
+    updated_at timestamptz not null default now(),
+    updated_by uuid references public.profiles (id) on delete set null
+);
+
+alter table public.user_moderation enable row level security;
+grant select on public.user_moderation to authenticated;
+
+drop policy if exists "Moderators can view user restrictions" on public.user_moderation;
+create policy "Moderators can view user restrictions"
+    on public.user_moderation
+    for select
+    to authenticated
+    using (public.is_moderator());
+
+create table if not exists public.moderation_warnings (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid not null references public.profiles (id) on delete cascade,
+    moderator_id uuid references public.profiles (id) on delete set null,
+    message text not null check (char_length(message) between 1 and 1000),
+    created_at timestamptz not null default now()
+);
+
+create index if not exists moderation_warnings_created_at_idx
+    on public.moderation_warnings (created_at desc);
+
+alter table public.moderation_warnings enable row level security;
+grant select on public.moderation_warnings to authenticated;
+
+drop policy if exists "Moderators can view warnings" on public.moderation_warnings;
+create policy "Moderators can view warnings"
+    on public.moderation_warnings
+    for select
+    to authenticated
+    using (public.is_moderator());
+
+create or replace function public.is_current_user_restricted()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $function$
+    select exists (
+        select 1
+        from public.user_moderation
+        where user_id = (select auth.uid())
+            and (is_banned or timeout_until > now())
+    );
+$function$;
+
+revoke execute on function public.is_moderator() from public;
+revoke execute on function public.is_current_user_restricted() from public;
+grant execute on function public.is_moderator() to authenticated;
+grant execute on function public.is_current_user_restricted() to authenticated;
+
+create or replace function public.admin_set_user_restriction(
+    p_user_id uuid,
+    p_restriction text,
+    p_timeout_until timestamptz default null
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+begin
+    if not public.is_moderator() then
+        raise exception 'Moderator access required';
+    end if;
+    if p_restriction not in ('ban', 'timeout', 'clear') then
+        raise exception 'Invalid restriction';
+    end if;
+    if p_restriction = 'timeout' and (p_timeout_until is null or p_timeout_until <= now()) then
+        raise exception 'Timeout must end in the future';
+    end if;
+
+    insert into public.user_moderation (user_id, is_banned, timeout_until, updated_at, updated_by)
+    values (
+        p_user_id,
+        p_restriction = 'ban',
+        case when p_restriction = 'timeout' then p_timeout_until else null end,
+        now(),
+        (select auth.uid())
+    )
+    on conflict (user_id) do update
+    set is_banned = excluded.is_banned,
+        timeout_until = excluded.timeout_until,
+        updated_at = excluded.updated_at,
+        updated_by = excluded.updated_by;
+end;
+$function$;
+
+create or replace function public.admin_warn_user(p_user_id uuid, p_message text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+begin
+    if not public.is_moderator() then
+        raise exception 'Moderator access required';
+    end if;
+    if char_length(trim(p_message)) not between 1 and 1000 then
+        raise exception 'Warning must be between 1 and 1000 characters';
+    end if;
+
+    insert into public.moderation_warnings (user_id, moderator_id, message)
+    values (p_user_id, (select auth.uid()), trim(p_message));
+end;
+$function$;
+
+create or replace function public.admin_delete_user(p_user_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+begin
+    if not public.is_moderator() then
+        raise exception 'Moderator access required';
+    end if;
+    if p_user_id is null or p_user_id = (select auth.uid()) then
+        raise exception 'You cannot delete your own account from the moderation panel';
+    end if;
+    if exists (select 1 from public.moderation_admins where user_id = p_user_id)
+        and (select count(*) from public.moderation_admins) <= 1 then
+        raise exception 'Cannot delete the last moderator account';
+    end if;
+
+    delete from auth.users where id = p_user_id;
+    if not found then
+        raise exception 'Account not found';
+    end if;
+end;
+$function$;
+
+revoke execute on function public.admin_set_user_restriction(uuid, text, timestamptz) from public;
+revoke execute on function public.admin_warn_user(uuid, text) from public;
+revoke execute on function public.admin_delete_user(uuid) from public;
+grant execute on function public.admin_set_user_restriction(uuid, text, timestamptz) to authenticated;
+grant execute on function public.admin_warn_user(uuid, text) to authenticated;
+grant execute on function public.admin_delete_user(uuid) to authenticated;
+
+drop policy if exists "Signed-in users can create posts as themselves" on public.posts;
+create policy "Signed-in users can create posts as themselves"
+    on public.posts
+    for insert
+    to authenticated
+    with check (
+        (select auth.uid()) = author_id
+        and not public.is_current_user_restricted()
+    );
+
+grant delete on public.posts to authenticated;
+
+drop policy if exists "Moderators can delete posts" on public.posts;
+create policy "Moderators can delete posts"
+    on public.posts
+    for delete
+    to authenticated
+    using (public.is_moderator());
+
+drop policy if exists "Signed-in users can reply as themselves" on public.replies;
+create policy "Signed-in users can reply as themselves"
+    on public.replies
+    for insert
+    to authenticated
+    with check (
+        (select auth.uid()) = author_id
+        and not public.is_current_user_restricted()
+    );
