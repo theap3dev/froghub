@@ -139,10 +139,10 @@ function renderPosts(posts) {
             postImage.addEventListener('error', () => { postImage.hidden = true; }, { once: true });
         }
 
-        const repliesSection = document.createElement('section');
+        const repliesSection = document.createElement('details');
         repliesSection.className = 'post-replies';
 
-        const repliesHeading = document.createElement('h4');
+        const repliesHeading = document.createElement('summary');
         repliesHeading.className = 'replies-heading';
         repliesHeading.textContent = `Replies (${post.replies.length})`;
         repliesSection.append(repliesHeading);
