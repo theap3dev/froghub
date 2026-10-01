@@ -2,6 +2,8 @@
 const postForm = document.querySelector('#post-form');
 const postTitleInput = document.querySelector('#post-title');
 const postBodyInput = document.querySelector('#post-body');
+const postImageInput = document.querySelector('#post-image');
+const postImagePreview = document.querySelector('#post-image-preview');
 const postSubmitButton = document.querySelector('#post-submit');
 const postFeedback = document.querySelector('#post-feedback');
 const postList = document.querySelector('#post-list');
@@ -13,14 +15,49 @@ const supabaseClient = config && window.supabase
     : null;
 let loadedPosts = [];
 let isSignedIn = false;
+let postImagePreviewUrl = null;
+const imageExtensions = new Map([
+    ['image/jpeg', 'jpg'],
+    ['image/png', 'png'],
+    ['image/webp', 'webp'],
+    ['image/gif', 'gif']
+]);
+const maxPostImageSize = 8 * 1024 * 1024;
 
 function showPostFeedback(message, isError = false) {
     postFeedback.textContent = message;
     postFeedback.classList.toggle('is-error', isError);
 }
 
-function isMissingAvatarPath(error) {
-    return error?.code === '42703' || error?.code === 'PGRST204';
+function isMissingColumn(error, column) {
+    const description = `${error?.message || ''} ${error?.details || ''}`.toLowerCase();
+    return (error?.code === '42703' || error?.code === 'PGRST204')
+        && description.includes(column);
+}
+
+function updatePostImagePreview() {
+    if (postImagePreviewUrl) URL.revokeObjectURL(postImagePreviewUrl);
+    postImagePreviewUrl = null;
+    postImagePreview.hidden = true;
+    postImagePreview.removeAttribute('src');
+
+    const image = postImageInput.files[0];
+    if (!image) return;
+    if (!imageExtensions.has(image.type)) {
+        postImageInput.value = '';
+        showPostFeedback('Choose a JPEG, PNG, WebP, or GIF image.', true);
+        return;
+    }
+    if (image.size > maxPostImageSize) {
+        postImageInput.value = '';
+        showPostFeedback('The photo must be 8 MB or smaller.', true);
+        return;
+    }
+
+    postImagePreviewUrl = URL.createObjectURL(image);
+    postImagePreview.src = postImagePreviewUrl;
+    postImagePreview.hidden = false;
+    showPostFeedback(`${image.name} is ready to upload.`);
 }
 
 function createPostAvatar(profile, username) {
@@ -93,6 +130,15 @@ function renderPosts(posts) {
         body.className = 'post-body';
         body.textContent = post.body;
 
+        const postImage = post.image_path ? document.createElement('img') : null;
+        if (postImage) {
+            postImage.className = 'post-image';
+            postImage.alt = `Photo attached to ${post.title}`;
+            postImage.loading = 'lazy';
+            postImage.src = supabaseClient.storage.from('post-images').getPublicUrl(post.image_path).data.publicUrl;
+            postImage.addEventListener('error', () => { postImage.hidden = true; }, { once: true });
+        }
+
         const repliesSection = document.createElement('section');
         repliesSection.className = 'post-replies';
 
@@ -164,7 +210,9 @@ function renderPosts(posts) {
             repliesSection.append(signInLink);
         }
 
-        article.append(title, meta, body, repliesSection);
+        article.append(title, meta, body);
+        if (postImage) article.append(postImage);
+        article.append(repliesSection);
         postList.append(article);
     });
 }
@@ -173,20 +221,33 @@ async function loadPosts() {
     showPostFeedback('Loading posts...');
     postList.replaceChildren();
 
-    let { data, error } = await supabaseClient
-        .from('posts')
-        .select('id, title, body, created_at, profiles(id, username, avatar_path)')
-        .order('created_at', { ascending: false })
-        .limit(50);
-
+    let data;
+    let error;
     let avatarMigrationNeeded = false;
-    if (error && isMissingAvatarPath(error)) {
-        avatarMigrationNeeded = true;
+    let imageMigrationNeeded = false;
+    let includeAvatarPath = true;
+    let includeImagePath = true;
+    while (true) {
+        const postColumns = ['id', 'title', 'body', 'created_at'];
+        if (includeImagePath) postColumns.push('image_path');
+        const profileColumns = includeAvatarPath ? 'id, username, avatar_path' : 'id, username';
         ({ data, error } = await supabaseClient
             .from('posts')
-            .select('id, title, body, created_at, profiles(id, username)')
+            .select(`${postColumns.join(', ')}, profiles(${profileColumns})`)
             .order('created_at', { ascending: false })
             .limit(50));
+        if (!error) break;
+        if (includeImagePath && isMissingColumn(error, 'image_path')) {
+            includeImagePath = false;
+            imageMigrationNeeded = true;
+            continue;
+        }
+        if (includeAvatarPath && isMissingColumn(error, 'avatar_path')) {
+            includeAvatarPath = false;
+            avatarMigrationNeeded = true;
+            continue;
+        }
+        break;
     }
 
     if (error) {
@@ -230,6 +291,7 @@ async function loadPosts() {
     renderPosts(loadedPosts);
     const notices = [];
     if (avatarMigrationNeeded) notices.push('Run database/schema.sql in Supabase to enable profile photos.');
+    if (imageMigrationNeeded) notices.push('Run database/schema.sql in Supabase to enable post photos.');
     if (migrationNeeded) notices.push('Run database/schema.sql in Supabase to enable replies.');
     showPostFeedback(notices.join(' '));
 }
@@ -260,15 +322,34 @@ if (postForm) postForm.addEventListener('submit', async (event) => {
         if (sessionError) throw sessionError;
         if (!session) throw new Error('Sign in to publish a post.');
 
+        const image = postImageInput.files[0];
+        let imagePath = null;
+        if (image) {
+            const extension = imageExtensions.get(image.type);
+            imagePath = `${session.user.id}/${crypto.randomUUID()}.${extension}`;
+            const { error: uploadError } = await supabaseClient.storage
+                .from('post-images')
+                .upload(imagePath, image, { contentType: image.type, upsert: false });
+            if (uploadError) throw uploadError;
+        }
+
         const { error } = await supabaseClient.from('posts').insert({
             author_id: session.user.id,
             title: postTitleInput.value.trim(),
-            body: postBodyInput.value.trim()
+            body: postBodyInput.value.trim(),
+            image_path: imagePath
         });
 
-        if (error) throw error;
+        if (error) {
+            if (imagePath) await supabaseClient.storage.from('post-images').remove([imagePath]);
+            if (isMissingColumn(error, 'image_path')) {
+                throw new Error('Run database/schema.sql in Supabase to enable post photos.');
+            }
+            throw error;
+        }
 
         postForm.reset();
+        updatePostImagePreview();
         showPostFeedback('Post published.');
         await loadPosts();
     } catch (error) {
@@ -277,6 +358,8 @@ if (postForm) postForm.addEventListener('submit', async (event) => {
         postSubmitButton.disabled = false;
     }
 });
+
+if (postImageInput) postImageInput.addEventListener('change', updatePostImagePreview);
 
 postList.addEventListener('submit', async (event) => {
     const replyForm = event.target.closest('.reply-form');

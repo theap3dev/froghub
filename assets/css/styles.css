@@ -380,6 +380,39 @@ body {
     color: #888;
 }
 
+.field input[type="file"] {
+    width: 100%;
+    min-height: 42px;
+    box-sizing: border-box;
+    padding: 8px;
+    border: 1px solid #555;
+    background: #1d1d1d;
+    color: #ddd;
+    font: inherit;
+}
+
+.field small {
+    color: #aaa;
+    font-size: 0.78rem;
+    font-weight: 400;
+}
+
+.post-image-preview,
+.post-image {
+    display: block;
+    width: min(100%, 680px);
+    max-height: 560px;
+    margin: 12px 0 18px;
+    border: 1px solid #484848;
+    background: #202020;
+    object-fit: contain;
+}
+
+.post-image-preview {
+    max-height: 320px;
+    margin-top: 0;
+}
+
 .post-feedback {
     min-height: 1.2em;
     margin: 0 0 12px;

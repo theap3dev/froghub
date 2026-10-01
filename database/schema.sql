@@ -64,6 +64,40 @@ create policy "Members can delete their own avatars"
         and (storage.foldername(name))[1] = (select auth.uid())::text
     );
 
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('post-images', 'post-images', true, 8388608, array['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+on conflict (id) do update
+set public = excluded.public,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "Post images are publicly readable" on storage.objects;
+create policy "Post images are publicly readable"
+    on storage.objects
+    for select
+    to public
+    using (bucket_id = 'post-images');
+
+drop policy if exists "Members can upload their own post images" on storage.objects;
+create policy "Members can upload their own post images"
+    on storage.objects
+    for insert
+    to authenticated
+    with check (
+        bucket_id = 'post-images'
+        and (storage.foldername(name))[1] = (select auth.uid())::text
+    );
+
+drop policy if exists "Members can delete their own post images" on storage.objects;
+create policy "Members can delete their own post images"
+    on storage.objects
+    for delete
+    to authenticated
+    using (
+        bucket_id = 'post-images'
+        and (storage.foldername(name))[1] = (select auth.uid())::text
+    );
+
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -89,6 +123,8 @@ create table if not exists public.posts (
     body text not null check (char_length(body) between 1 and 5000),
     created_at timestamptz not null default now()
 );
+
+alter table public.posts add column if not exists image_path text;
 
 create index if not exists posts_created_at_desc_idx
     on public.posts (created_at desc);
@@ -221,6 +257,17 @@ revoke execute on function public.is_moderator() from public;
 revoke execute on function public.is_current_user_restricted() from public;
 grant execute on function public.is_moderator() to authenticated;
 grant execute on function public.is_current_user_restricted() to authenticated;
+
+drop policy if exists "Members can upload their own post images" on storage.objects;
+create policy "Members can upload their own post images"
+    on storage.objects
+    for insert
+    to authenticated
+    with check (
+        bucket_id = 'post-images'
+        and (storage.foldername(name))[1] = (select auth.uid())::text
+        and not public.is_current_user_restricted()
+    );
 
 create or replace function public.admin_set_user_restriction(
     p_user_id uuid,

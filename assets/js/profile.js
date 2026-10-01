@@ -21,6 +21,12 @@ function isMissingAvatarPath(error) {
     return error?.code === '42703' || error?.code === 'PGRST204';
 }
 
+function isMissingImagePath(error) {
+    const description = `${error?.message || ''} ${error?.details || ''}`.toLowerCase();
+    return (error?.code === '42703' || error?.code === 'PGRST204')
+        && description.includes('image_path');
+}
+
 function getRouteUsername() {
     const queryUsername = new URLSearchParams(window.location.search).get('username');
     if (queryUsername) return queryUsername;
@@ -89,6 +95,15 @@ function renderPosts(posts) {
         body.textContent = post.body;
 
         article.append(title, meta, body);
+        if (post.image_path) {
+            const image = document.createElement('img');
+            image.className = 'post-image';
+            image.alt = `Photo attached to ${post.title}`;
+            image.loading = 'lazy';
+            image.src = supabaseClient.storage.from('post-images').getPublicUrl(post.image_path).data.publicUrl;
+            image.addEventListener('error', () => { image.hidden = true; }, { once: true });
+            article.append(image);
+        }
         profilePostList.append(article);
     });
 }
@@ -131,18 +146,29 @@ async function loadProfile() {
         }
 
         renderProfile(profile);
-        const { data: posts, error: postsError } = await supabaseClient
+        let { data: posts, error: postsError } = await supabaseClient
             .from('posts')
-            .select('id, title, body, created_at')
+            .select('id, title, body, created_at, image_path')
             .eq('author_id', profile.id)
             .order('created_at', { ascending: false })
             .limit(50);
+        let imageMigrationNeeded = false;
+        if (postsError && isMissingImagePath(postsError)) {
+            imageMigrationNeeded = true;
+            ({ data: posts, error: postsError } = await supabaseClient
+                .from('posts')
+                .select('id, title, body, created_at')
+                .eq('author_id', profile.id)
+                .order('created_at', { ascending: false })
+                .limit(50));
+        }
         if (postsError) throw postsError;
 
         renderPosts(posts || []);
-        showProfileFeedback(avatarMigrationNeeded
-            ? 'Run database/schema.sql in Supabase to enable profile photos.'
-            : '');
+        const notices = [];
+        if (avatarMigrationNeeded) notices.push('Run database/schema.sql in Supabase to enable profile photos.');
+        if (imageMigrationNeeded) notices.push('Run database/schema.sql in Supabase to enable post photos.');
+        showProfileFeedback(notices.join(' '));
     } catch (error) {
         showProfileFeedback(error.message || 'Could not load this member profile.', true);
     }

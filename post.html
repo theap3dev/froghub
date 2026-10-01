@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Posts | frogchat</title>
-    <link rel="stylesheet" href="assets/css/styles.css?v=2">
+    <link rel="stylesheet" href="assets/css/styles.css?v=3">
 </head>
 <body>
     <header class="topbar">
@@ -35,6 +35,12 @@
                     <span>Post</span>
                     <textarea id="post-body" name="body" rows="5" maxlength="5000" placeholder="What’s on your mind?" required></textarea>
                 </label>
+                <label class="field">
+                    <span>Photo (optional)</span>
+                    <input id="post-image" name="image" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+                    <small>JPEG, PNG, WebP, or GIF. Maximum size: 8 MB.</small>
+                </label>
+                <img class="post-image-preview" id="post-image-preview" alt="Selected photo preview" hidden>
                 <button class="submit-button" id="post-submit" type="submit">Publish post</button>
             </form>
             <p class="post-feedback" id="post-feedback" role="status" aria-live="polite"></p>
@@ -44,6 +50,6 @@
 
     <script src="assets/js/supabase-config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="assets/js/posts.js"></script>
+    <script src="assets/js/posts.js?v=2"></script>
 </body>
 </html>
