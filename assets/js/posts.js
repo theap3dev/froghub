@@ -55,7 +55,7 @@ function parsePostTags(value) {
 
 function getTagUrl(tag) {
     if (window.location.hostname === 'theap3dev.github.io') {
-        return new URL(`/tags/${encodeURIComponent(tag)}`, window.location.origin).href;
+        return new URL(`/froghub/tags/${encodeURIComponent(tag)}`, window.location.origin).href;
     }
     return new URL(`tag.html?tag=${encodeURIComponent(tag)}`, window.location.href).href;
 }
