@@ -53,6 +53,7 @@ function setMode(nextMode) {
     authTabs.hidden = false;
     usernameField.hidden = !isSignup;
     usernameInput.required = isSignup;
+    usernameInput.disabled = !isSignup;
     emailField.hidden = false;
     emailInput.required = true;
     passwordField.hidden = false;
@@ -77,6 +78,7 @@ function setPasswordRecoveryMode() {
     authTabs.hidden = true;
     usernameField.hidden = true;
     usernameInput.required = false;
+    usernameInput.disabled = true;
     emailField.hidden = true;
     emailInput.required = false;
     passwordField.hidden = false;
