@@ -2,6 +2,7 @@
 const postForm = document.querySelector('#post-form');
 const postTitleInput = document.querySelector('#post-title');
 const postBodyInput = document.querySelector('#post-body');
+const postTagsInput = document.querySelector('#post-tags');
 const postImageInput = document.querySelector('#post-image');
 const postImagePreview = document.querySelector('#post-image-preview');
 const postSubmitButton = document.querySelector('#post-submit');
@@ -13,6 +14,7 @@ const config = window.FROGCHAT_SUPABASE_CONFIG;
 const supabaseClient = config && window.supabase
     ? window.supabase.createClient(config.url, config.anonKey)
     : null;
+const activeTag = (new URLSearchParams(window.location.search).get('tag') || '').trim().toLowerCase();
 let loadedPosts = [];
 let isSignedIn = false;
 let postImagePreviewUrl = null;
@@ -33,6 +35,37 @@ function isMissingColumn(error, column) {
     const description = `${error?.message || ''} ${error?.details || ''}`.toLowerCase();
     return (error?.code === '42703' || error?.code === 'PGRST204')
         && description.includes(column);
+}
+
+function isMissingTagsTable(error) {
+    const description = `${error?.message || ''} ${error?.details || ''}`.toLowerCase();
+    return ['PGRST200', 'PGRST205', '42P01'].includes(error?.code)
+        && description.includes('post_tags');
+}
+
+function parsePostTags(value) {
+    const enteredTags = value.split(',').map((tag) => tag.trim().toLowerCase()).filter(Boolean);
+    const tags = [...new Set(enteredTags)];
+    if (tags.length > 5) throw new Error('Add no more than 5 tags.');
+    if (tags.some((tag) => !/^[a-z0-9][a-z0-9-]{0,29}$/.test(tag))) {
+        throw new Error('Tags must be 1-30 characters, start with a letter or number, and use only letters, numbers, or hyphens.');
+    }
+    return tags;
+}
+
+function getTagUrl(tag) {
+    if (window.location.hostname === 'theap3dev.github.io') {
+        return new URL(`/tags/${encodeURIComponent(tag)}`, window.location.origin).href;
+    }
+    return new URL(`tag.html?tag=${encodeURIComponent(tag)}`, window.location.href).href;
+}
+
+if (activeTag) {
+    const title = document.querySelector('#posts-title');
+    const kicker = document.querySelector('#posts-kicker');
+    if (title) title.textContent = `#${activeTag}`;
+    if (kicker) kicker.textContent = 'TAG';
+    document.title = `#${activeTag} | frogchat`;
 }
 
 function updatePostImagePreview() {
@@ -98,7 +131,7 @@ function renderPosts(posts) {
     if (posts.length === 0) {
         const emptyState = document.createElement('p');
         emptyState.className = 'post-empty';
-        emptyState.textContent = 'No posts yet. Sign in to share the first one.';
+        emptyState.textContent = activeTag ? `No posts use #${activeTag} yet.` : 'No posts yet. Sign in to share the first one.';
         postList.append(emptyState);
         return;
     }
@@ -137,6 +170,20 @@ function renderPosts(posts) {
             postImage.loading = 'lazy';
             postImage.src = supabaseClient.storage.from('post-images').getPublicUrl(post.image_path).data.publicUrl;
             postImage.addEventListener('error', () => { postImage.hidden = true; }, { once: true });
+        }
+
+        const postTags = post.post_tags?.map(({ tag }) => tag) || [];
+        const tagList = postTags.length > 0 ? document.createElement('nav') : null;
+        if (tagList) {
+            tagList.className = 'post-tags';
+            tagList.setAttribute('aria-label', 'Post tags');
+            postTags.forEach((tag) => {
+                const tagLink = document.createElement('a');
+                tagLink.className = 'post-tag-link';
+                tagLink.href = getTagUrl(tag);
+                tagLink.textContent = `#${tag}`;
+                tagList.append(tagLink);
+            });
         }
 
         const repliesSection = document.createElement('details');
@@ -212,6 +259,7 @@ function renderPosts(posts) {
 
         article.append(title, meta, body);
         if (postImage) article.append(postImage);
+        if (tagList) article.append(tagList);
         article.append(repliesSection);
         postList.append(article);
     });
@@ -227,16 +275,32 @@ async function loadPosts() {
     let imageMigrationNeeded = false;
     let includeAvatarPath = true;
     let includeImagePath = true;
+    let includeTags = true;
+    let tagsMigrationNeeded = false;
     while (true) {
         const postColumns = ['id', 'title', 'body', 'created_at'];
         if (includeImagePath) postColumns.push('image_path');
         const profileColumns = includeAvatarPath ? 'id, username, avatar_path' : 'id, username';
-        ({ data, error } = await supabaseClient
+        const embeds = [`profiles(${profileColumns})`];
+        if (includeTags) embeds.push(activeTag ? 'post_tags!inner(tag)' : 'post_tags(tag)');
+        let postsQuery = supabaseClient
             .from('posts')
-            .select(`${postColumns.join(', ')}, profiles(${profileColumns})`)
+            .select(`${postColumns.join(', ')}, ${embeds.join(', ')}`)
             .order('created_at', { ascending: false })
-            .limit(50));
+            .order('id', { ascending: true })
+            .range(0, 49);
+        if (activeTag) postsQuery = postsQuery.eq('post_tags.tag', activeTag);
+        ({ data, error } = await postsQuery);
         if (!error) break;
+        if (includeTags && isMissingTagsTable(error)) {
+            if (activeTag) {
+                showPostFeedback('Run database/schema.sql in Supabase to enable post tags.', true);
+                return;
+            }
+            includeTags = false;
+            tagsMigrationNeeded = true;
+            continue;
+        }
         if (includeImagePath && isMissingColumn(error, 'image_path')) {
             includeImagePath = false;
             imageMigrationNeeded = true;
@@ -256,6 +320,29 @@ async function loadPosts() {
     }
 
     const posts = data || [];
+    if (activeTag && posts.length === 50) {
+        let offset = posts.length;
+        while (true) {
+            const postColumns = ['id', 'title', 'body', 'created_at'];
+            if (includeImagePath) postColumns.push('image_path');
+            const profileColumns = includeAvatarPath ? 'id, username, avatar_path' : 'id, username';
+            const { data: nextPosts, error: nextPostsError } = await supabaseClient
+                .from('posts')
+                .select(`${postColumns.join(', ')}, profiles(${profileColumns}), post_tags!inner(tag)`)
+                .eq('post_tags.tag', activeTag)
+                .order('created_at', { ascending: false })
+                .order('id', { ascending: true })
+                .range(offset, offset + 49);
+            if (nextPostsError) {
+                showPostFeedback(nextPostsError.message, true);
+                return;
+            }
+            posts.push(...(nextPosts || []));
+            if (!nextPosts || nextPosts.length < 50) break;
+            offset += nextPosts.length;
+        }
+    }
+
     let replies = [];
     let migrationNeeded = false;
     if (posts.length > 0) {
@@ -292,6 +379,7 @@ async function loadPosts() {
     const notices = [];
     if (avatarMigrationNeeded) notices.push('Run database/schema.sql in Supabase to enable profile photos.');
     if (imageMigrationNeeded) notices.push('Run database/schema.sql in Supabase to enable post photos.');
+    if (tagsMigrationNeeded) notices.push('Run database/schema.sql in Supabase to enable post tags.');
     if (migrationNeeded) notices.push('Run database/schema.sql in Supabase to enable replies.');
     showPostFeedback(notices.join(' '));
 }
@@ -318,6 +406,7 @@ if (postForm) postForm.addEventListener('submit', async (event) => {
     showPostFeedback('Publishing...');
 
     try {
+        const tags = parsePostTags(postTagsInput.value);
         const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
         if (sessionError) throw sessionError;
         if (!session) throw new Error('Sign in to publish a post.');
@@ -333,12 +422,12 @@ if (postForm) postForm.addEventListener('submit', async (event) => {
             if (uploadError) throw uploadError;
         }
 
-        const { error } = await supabaseClient.from('posts').insert({
+        const { data: createdPost, error } = await supabaseClient.from('posts').insert({
             author_id: session.user.id,
             title: postTitleInput.value.trim(),
             body: postBodyInput.value.trim(),
             image_path: imagePath
-        });
+        }).select('id').single();
 
         if (error) {
             if (imagePath) await supabaseClient.storage.from('post-images').remove([imagePath]);
@@ -346,6 +435,22 @@ if (postForm) postForm.addEventListener('submit', async (event) => {
                 throw new Error('Run database/schema.sql in Supabase to enable post photos.');
             }
             throw error;
+        }
+
+        if (tags.length > 0) {
+            const { error: tagsError } = await supabaseClient.from('post_tags').insert(
+                tags.map((tag) => ({ post_id: createdPost.id, tag }))
+            );
+            if (tagsError) {
+                postForm.reset();
+                updatePostImagePreview();
+                const message = isMissingTagsTable(tagsError)
+                    ? 'Post published, but tags were not saved. Run database/schema.sql in Supabase to enable tags.'
+                    : `Post published, but tags were not saved: ${tagsError.message}`;
+                await loadPosts();
+                showPostFeedback(message, true);
+                return;
+            }
         }
 
         postForm.reset();

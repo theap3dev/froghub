@@ -451,6 +451,29 @@ body {
     font-size: 0.8rem;
 }
 
+.post-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 14px;
+}
+
+.post-tag-link {
+    display: inline-flex;
+    min-height: 28px;
+    align-items: center;
+    padding: 0 9px;
+    border: 1px solid #65766d;
+    color: #c9e4d5;
+    font-size: 0.78rem;
+    text-decoration: none;
+}
+
+.post-tag-link:hover {
+    border-color: #a6cbb6;
+    color: #fff;
+}
+
 .post-author-link {
     display: inline-flex;
     align-items: center;

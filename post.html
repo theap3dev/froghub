@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Posts | frogchat</title>
-    <link rel="stylesheet" href="assets/css/styles.css?v=5">
+    <link rel="stylesheet" href="assets/css/styles.css?v=6">
 </head>
 <body>
     <header class="topbar">
@@ -36,6 +36,11 @@
                     <textarea id="post-body" name="body" rows="5" maxlength="5000" placeholder="What’s on your mind?" required></textarea>
                 </label>
                 <label class="field">
+                    <span>Tags</span>
+                    <input id="post-tags" name="tags" type="text" maxlength="180" placeholder="security, web, python" autocomplete="off">
+                    <small>Separate tags with commas. Up to 5 tags, using letters, numbers, and hyphens.</small>
+                </label>
+                <label class="field">
                     <span>Photo (optional)</span>
                     <input id="post-image" name="image" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
                     <small>JPEG, PNG, WebP, or GIF. Maximum size: 8 MB.</small>
@@ -50,6 +55,6 @@
 
     <script src="assets/js/supabase-config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="assets/js/posts.js?v=3"></script>
+    <script src="assets/js/posts.js?v=4"></script>
 </body>
 </html>

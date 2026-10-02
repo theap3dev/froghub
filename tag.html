@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tag | frogchat</title>
+    <link rel="stylesheet" href="assets/css/styles.css?v=6">
+</head>
+<body>
+    <header class="topbar">
+        <h1 class="brand"><a class="brand-link" href="index.html"><img class="brand-logo" src="assets/img/logo-removebg-preview.png" alt="">frogchat</a></h1>
+        <nav class="topbar-nav" aria-label="Main navigation">
+            <a class="topbar-link" href="index.html">Home</a>
+            <a class="topbar-link" href="users.html">Members</a>
+            <a class="topbar-link" href="post.html">Create post</a>
+            <a class="topbar-link" id="account-link" href="account.html" hidden>Account</a>
+        </nav>
+    </header>
+
+    <main class="auth-layout posts-page-layout">
+        <section class="posts-section" aria-labelledby="posts-title">
+            <header class="posts-header">
+                <div>
+                    <p class="posts-kicker" id="posts-kicker">TAG</p>
+                    <h2 id="posts-title">Posts by tag</h2>
+                </div>
+                <button class="refresh-button" id="refresh-posts" type="button">Refresh</button>
+            </header>
+            <p class="post-feedback" id="post-feedback" role="status" aria-live="polite"></p>
+            <div class="post-list" id="post-list" aria-live="polite"></div>
+        </section>
+    </main>
+
+    <script src="assets/js/supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="assets/js/posts.js?v=4"></script>
+</body>
+</html>

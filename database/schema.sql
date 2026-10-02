@@ -155,6 +155,26 @@ alter table public.posts enable row level security;
 grant select on public.posts to anon, authenticated;
 grant insert on public.posts to authenticated;
 
+create table if not exists public.post_tags (
+    post_id uuid not null references public.posts (id) on delete cascade,
+    tag text not null check (tag ~ '^[a-z0-9][a-z0-9-]{0,29}$'),
+    primary key (post_id, tag)
+);
+
+create index if not exists post_tags_tag_post_idx
+    on public.post_tags (tag, post_id);
+
+alter table public.post_tags enable row level security;
+grant select on public.post_tags to anon, authenticated;
+grant insert on public.post_tags to authenticated;
+
+drop policy if exists "Post tags are viewable by everyone" on public.post_tags;
+create policy "Post tags are viewable by everyone"
+    on public.post_tags
+    for select
+    to anon, authenticated
+    using (true);
+
 drop policy if exists "Posts are viewable by everyone" on public.posts;
 create policy "Posts are viewable by everyone"
     on public.posts
@@ -287,6 +307,21 @@ create policy "Members can upload their own post images"
     with check (
         bucket_id = 'post-images'
         and (storage.foldername(name))[1] = (select auth.uid())::text
+        and not public.is_current_user_restricted()
+    );
+
+drop policy if exists "Members can tag their own posts" on public.post_tags;
+create policy "Members can tag their own posts"
+    on public.post_tags
+    for insert
+    to authenticated
+    with check (
+        exists (
+            select 1
+            from public.posts as tagged_post
+            where tagged_post.id = post_tags.post_id
+                and tagged_post.author_id = (select auth.uid())
+        )
         and not public.is_current_user_restricted()
     );
 

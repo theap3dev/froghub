@@ -42,6 +42,18 @@ function getRouteUsername() {
     }
 }
 
+function getRouteTag() {
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const tagsIndex = pathParts.lastIndexOf('tags');
+    if (tagsIndex === -1 || tagsIndex !== pathParts.length - 2) return '';
+
+    try {
+        return decodeURIComponent(pathParts[tagsIndex + 1]).toLowerCase();
+    } catch {
+        return '';
+    }
+}
+
 function showAvatarFallback(username) {
     profileAvatar.hidden = true;
     profileAvatar.removeAttribute('src');
@@ -109,6 +121,14 @@ function renderPosts(posts) {
 }
 
 async function loadProfile() {
+    const tag = getRouteTag();
+    if (tag && /^[a-z0-9][a-z0-9-]{0,29}$/.test(tag)) {
+        const tagPage = new URL('../tag.html', window.location.href);
+        tagPage.searchParams.set('tag', tag);
+        window.location.replace(tagPage.href);
+        return;
+    }
+
     const username = getRouteUsername();
     if (!/^[A-Za-z0-9_]{3,20}$/.test(username)) {
         profileName.textContent = 'Member not found';
