@@ -24,7 +24,10 @@ const hasConfig = Boolean(supabaseConfig?.url.startsWith('https://')
 const supabaseClient = hasConfig && window.supabase
     ? window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey)
     : null;
-const authRedirectUrl = `${window.location.origin}${window.location.pathname}`;
+const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname);
+const authRedirectUrl = isLocalhost
+    ? 'https://theap3dev.github.io/'
+    : `${window.location.origin}${window.location.pathname}`;
 
 let mode = 'signin';
 let passwordRecovery = false;
