@@ -474,6 +474,56 @@ body {
     color: #fff;
 }
 
+.post-voting {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.post-vote-button {
+    display: grid;
+    width: 34px;
+    height: 32px;
+    place-items: center;
+    border: 1px solid #65766d;
+    background: #252a27;
+    color: #c9e4d5;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.78rem;
+}
+
+.post-vote-button:hover:not(:disabled),
+.post-vote-button[aria-pressed="true"] {
+    border-color: #a6cbb6;
+    background: #34473d;
+    color: #fff;
+}
+
+.post-vote-button[data-vote="-1"][aria-pressed="true"] {
+    border-color: #c7867f;
+    background: #4a302e;
+    color: #ffc1b9;
+}
+
+.post-vote-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.post-vote-score {
+    min-width: 2ch;
+    color: #e0eee6;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.post-vote-score.is-negative {
+    color: #ffaaa1;
+}
+
 .post-author-link {
     display: inline-flex;
     align-items: center;

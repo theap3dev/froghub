@@ -17,6 +17,8 @@ const supabaseClient = config && window.supabase
 const activeTag = (new URLSearchParams(window.location.search).get('tag') || '').trim().toLowerCase();
 let loadedPosts = [];
 let isSignedIn = false;
+let currentUserId = null;
+let votesAvailable = true;
 let postImagePreviewUrl = null;
 const imageExtensions = new Map([
     ['image/jpeg', 'jpg'],
@@ -41,6 +43,12 @@ function isMissingTagsTable(error) {
     const description = `${error?.message || ''} ${error?.details || ''}`.toLowerCase();
     return ['PGRST200', 'PGRST205', '42P01'].includes(error?.code)
         && description.includes('post_tags');
+}
+
+function isMissingVotesSchema(error) {
+    const description = `${error?.message || ''} ${error?.details || ''}`.toLowerCase();
+    return ['PGRST202', 'PGRST205', '42P01'].includes(error?.code)
+        && (description.includes('post_votes') || description.includes('post_vote_totals'));
 }
 
 function parsePostTags(value) {
@@ -163,6 +171,39 @@ function renderPosts(posts) {
         body.className = 'post-body';
         body.textContent = post.body;
 
+        const voting = document.createElement('div');
+        voting.className = 'post-voting';
+        voting.dataset.postId = post.id;
+        voting.setAttribute('aria-label', 'Vote on post');
+
+        const upvote = document.createElement('button');
+        upvote.className = 'post-vote-button';
+        upvote.type = 'button';
+        upvote.dataset.vote = '1';
+        upvote.setAttribute('aria-label', 'Upvote');
+        upvote.setAttribute('aria-pressed', String(post.userVote === 1));
+        upvote.title = currentUserId ? 'Upvote' : 'Sign in to vote';
+        upvote.disabled = !currentUserId || !votesAvailable;
+        upvote.textContent = '▲';
+
+        const voteScore = document.createElement('span');
+        voteScore.className = 'post-vote-score';
+        const score = post.upvotes - post.downvotes;
+        voteScore.classList.toggle('is-negative', score < 0);
+        voteScore.textContent = String(score);
+
+        const downvote = document.createElement('button');
+        downvote.className = 'post-vote-button';
+        downvote.type = 'button';
+        downvote.dataset.vote = '-1';
+        downvote.setAttribute('aria-label', 'Downvote');
+        downvote.setAttribute('aria-pressed', String(post.userVote === -1));
+        downvote.title = currentUserId ? 'Downvote' : 'Sign in to vote';
+        downvote.disabled = !currentUserId || !votesAvailable;
+        downvote.textContent = '▼';
+
+        voting.append(upvote, voteScore, downvote);
+
         const postImage = post.image_path ? document.createElement('img') : null;
         if (postImage) {
             postImage.className = 'post-image';
@@ -260,6 +301,7 @@ function renderPosts(posts) {
         article.append(title, meta, body);
         if (postImage) article.append(postImage);
         if (tagList) article.append(tagList);
+        article.append(voting);
         article.append(repliesSection);
         postList.append(article);
     });
@@ -343,6 +385,56 @@ async function loadPosts() {
         }
     }
 
+    const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+    if (sessionError) {
+        showPostFeedback(sessionError.message, true);
+        return;
+    }
+    currentUserId = session?.user?.id || null;
+    isSignedIn = Boolean(currentUserId);
+
+    const voteTotals = new Map();
+    const ownVotes = new Map();
+    let voteMigrationNeeded = false;
+    if (posts.length > 0) {
+        const postIds = posts.map((post) => post.id);
+        const { data: totals, error: totalsError } = await supabaseClient
+            .from('post_vote_totals')
+            .select('post_id, upvotes, downvotes')
+            .in('post_id', postIds);
+
+        if (totalsError) {
+            if (isMissingVotesSchema(totalsError)) {
+                votesAvailable = false;
+                voteMigrationNeeded = true;
+            } else {
+                showPostFeedback(totalsError.message, true);
+                return;
+            }
+        } else {
+            votesAvailable = true;
+            (totals || []).forEach((total) => voteTotals.set(total.post_id, total));
+            if (currentUserId) {
+                const { data: userVotes, error: userVotesError } = await supabaseClient
+                    .from('post_votes')
+                    .select('post_id, vote')
+                    .in('post_id', postIds)
+                    .eq('user_id', currentUserId);
+                if (userVotesError) {
+                    if (isMissingVotesSchema(userVotesError)) {
+                        votesAvailable = false;
+                        voteMigrationNeeded = true;
+                    } else {
+                        showPostFeedback(userVotesError.message, true);
+                        return;
+                    }
+                } else {
+                    (userVotes || []).forEach((userVote) => ownVotes.set(userVote.post_id, userVote.vote));
+                }
+            }
+        }
+    }
+
     let replies = [];
     let migrationNeeded = false;
     if (posts.length > 0) {
@@ -373,6 +465,9 @@ async function loadPosts() {
 
     loadedPosts = posts.map((post) => ({
         ...post,
+        upvotes: voteTotals.get(post.id)?.upvotes || 0,
+        downvotes: voteTotals.get(post.id)?.downvotes || 0,
+        userVote: ownVotes.get(post.id) || 0,
         replies: repliesByPost.get(post.id) || []
     }));
     renderPosts(loadedPosts);
@@ -380,6 +475,7 @@ async function loadPosts() {
     if (avatarMigrationNeeded) notices.push('Run database/schema.sql in Supabase to enable profile photos.');
     if (imageMigrationNeeded) notices.push('Run database/schema.sql in Supabase to enable post photos.');
     if (tagsMigrationNeeded) notices.push('Run database/schema.sql in Supabase to enable post tags.');
+    if (voteMigrationNeeded) notices.push('Run database/schema.sql in Supabase to enable post voting.');
     if (migrationNeeded) notices.push('Run database/schema.sql in Supabase to enable replies.');
     showPostFeedback(notices.join(' '));
 }
@@ -390,10 +486,17 @@ if (!supabaseClient) {
     showPostFeedback('Connect your Supabase project to load posts.', true);
 } else {
     supabaseClient.auth.onAuthStateChange((_event, session) => {
-        isSignedIn = Boolean(session?.user);
+        const nextUserId = session?.user?.id || null;
+        const userChanged = nextUserId !== currentUserId;
+        currentUserId = nextUserId;
+        isSignedIn = Boolean(currentUserId);
         accountLink.hidden = !isSignedIn;
         if (postForm) postForm.hidden = !isSignedIn;
-        if (loadedPosts.length > 0) renderPosts(loadedPosts);
+        if (userChanged && loadedPosts.length > 0) {
+            loadPosts().catch((error) => showPostFeedback(error.message, true));
+        } else if (loadedPosts.length > 0) {
+            renderPosts(loadedPosts);
+        }
     });
     loadPosts().catch((error) => showPostFeedback(error.message, true));
 }
@@ -465,6 +568,57 @@ if (postForm) postForm.addEventListener('submit', async (event) => {
 });
 
 if (postImageInput) postImageInput.addEventListener('change', updatePostImagePreview);
+
+postList.addEventListener('click', async (event) => {
+    const voteButton = event.target.closest('.post-vote-button');
+    if (!voteButton || !supabaseClient || !currentUserId || !votesAvailable) return;
+
+    const post = loadedPosts.find((loadedPost) => loadedPost.id === voteButton.closest('.post-voting').dataset.postId);
+    if (!post) return;
+
+    const vote = Number(voteButton.dataset.vote);
+    const previousVote = post.userVote;
+    const removeVote = previousVote === vote;
+    const voting = voteButton.closest('.post-voting');
+    voting.querySelectorAll('.post-vote-button').forEach((button) => { button.disabled = true; });
+
+    try {
+        const result = removeVote
+            ? await supabaseClient.from('post_votes').delete()
+                .eq('post_id', post.id)
+                .eq('user_id', currentUserId)
+            : await supabaseClient.from('post_votes').upsert({
+                post_id: post.id,
+                user_id: currentUserId,
+                vote
+            }, { onConflict: 'post_id,user_id' });
+
+        if (result.error) {
+            if (isMissingVotesSchema(result.error)) {
+                votesAvailable = false;
+                renderPosts(loadedPosts);
+                showPostFeedback('Run database/schema.sql in Supabase to enable post voting.', true);
+                return;
+            }
+            throw result.error;
+        }
+
+        if (previousVote === 1) post.upvotes -= 1;
+        if (previousVote === -1) post.downvotes -= 1;
+        if (!removeVote && vote === 1) post.upvotes += 1;
+        if (!removeVote && vote === -1) post.downvotes += 1;
+        post.userVote = removeVote ? 0 : vote;
+        renderPosts(loadedPosts);
+    } catch (error) {
+        showPostFeedback(error.message || 'Could not save your vote.', true);
+    } finally {
+        if (voting.isConnected) {
+            voting.querySelectorAll('.post-vote-button').forEach((button) => {
+                button.disabled = !currentUserId || !votesAvailable;
+            });
+        }
+    }
+});
 
 postList.addEventListener('submit', async (event) => {
     const replyForm = event.target.closest('.reply-form');

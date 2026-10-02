@@ -175,6 +175,30 @@ create policy "Post tags are viewable by everyone"
     to anon, authenticated
     using (true);
 
+create table if not exists public.post_votes (
+    post_id uuid not null references public.posts (id) on delete cascade,
+    user_id uuid not null references auth.users (id) on delete cascade,
+    vote smallint not null check (vote in (-1, 1)),
+    created_at timestamptz not null default now(),
+    primary key (post_id, user_id)
+);
+
+create index if not exists post_votes_user_post_idx
+    on public.post_votes (user_id, post_id);
+
+alter table public.post_votes enable row level security;
+grant select, insert, update, delete on public.post_votes to authenticated;
+
+create or replace view public.post_vote_totals as
+select
+    post_id,
+    count(*) filter (where vote = 1)::integer as upvotes,
+    count(*) filter (where vote = -1)::integer as downvotes
+from public.post_votes
+group by post_id;
+
+grant select on public.post_vote_totals to anon, authenticated;
+
 drop policy if exists "Posts are viewable by everyone" on public.posts;
 create policy "Posts are viewable by everyone"
     on public.posts
@@ -298,6 +322,44 @@ revoke execute on function public.is_moderator() from public;
 revoke execute on function public.is_current_user_restricted() from public;
 grant execute on function public.is_moderator() to authenticated;
 grant execute on function public.is_current_user_restricted() to authenticated;
+
+drop policy if exists "Members can read their own post votes" on public.post_votes;
+create policy "Members can read their own post votes"
+    on public.post_votes
+    for select
+    to authenticated
+    using ((select auth.uid()) = user_id);
+
+drop policy if exists "Members can vote on posts" on public.post_votes;
+create policy "Members can vote on posts"
+    on public.post_votes
+    for insert
+    to authenticated
+    with check (
+        (select auth.uid()) = user_id
+        and not public.is_current_user_restricted()
+    );
+
+drop policy if exists "Members can change their own post votes" on public.post_votes;
+create policy "Members can change their own post votes"
+    on public.post_votes
+    for update
+    to authenticated
+    using (
+        (select auth.uid()) = user_id
+        and not public.is_current_user_restricted()
+    )
+    with check (
+        (select auth.uid()) = user_id
+        and not public.is_current_user_restricted()
+    );
+
+drop policy if exists "Members can remove their own post votes" on public.post_votes;
+create policy "Members can remove their own post votes"
+    on public.post_votes
+    for delete
+    to authenticated
+    using ((select auth.uid()) = user_id);
 
 drop policy if exists "Members can upload their own post images" on storage.objects;
 create policy "Members can upload their own post images"
